@@ -90,6 +90,7 @@ export function Overview({ b, reload }: TabProps) {
           ))}
           <div className="small" style={{ marginTop: 8 }}>관문 기준 제안 단계: <strong>{suggested}</strong> · 현재 단계: <strong>{e.stage}</strong></div>
           {e.stage_transition_reason && <div className="small muted">최근 전환 근거: {e.stage_transition_reason}</div>}
+          <a href={`/cases?stage=${e.stage ?? 'S0'}`} target="_blank" rel="noopener" className="small" style={{ display: 'inline-block', marginTop: 6 }}>이 단계에서 자주 나오는 사례 보기 ↗</a>
           {isMentor && (
             <>
               <label>단계</label>

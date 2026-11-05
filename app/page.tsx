@@ -108,6 +108,32 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="ed-sec ink">
+        <div className="pw ed-split">
+          <div>
+            <div className="ed-kicker">Case Library</div>
+            <h2 className="ed-h2 serif" style={{ color: '#fff' }}>대표가 가져오는 질문 66개와 그 해결 과정</h2>
+            <p className="ed-intro">“지인 12명이 좋다고 했어요”, “PoC를 하고 싶어요”, “연락이 잘 안 돼요.” 단계별로 가장 자주 나오는 이슈를 근본 원인, 진단 질문, 세션 진행, 2주 과제, 멘토의 함정까지 정리한 사례집입니다.</p>
+            <div className="row" style={{ gap: 12 }}>
+              <Link href="/cases" className="btn dawn lg">사례집 보기 <Icon name="arrow" size={16} /></Link>
+              <Link href="/cases?track=b2b-poc" className="btn line-light lg">B2B·PoC 플레이북</Link>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {[
+              { id: 'S0-01', q: '벌써 12명 만나 봤는데 다들 좋은 아이디어래요. 이 정도면 검증된 거 아닌가요?', t: '지인 인터뷰 12건을 검증으로 착각' },
+              { id: 'B2B-01', q: '사장님들이 써 보시면 다 좋다고 하시는데, 이상하게 결제까지는 안 가네요.', t: '사용자·구매결정자·예산보유자 미구분' },
+              { id: 'MC-01', q: '죄송해요, 이번 주는 정부과제 마감이라... 사전 질문지는 아직 못 했어요.', t: '대표가 연락을 잘 받지 않는다' },
+            ].map((x) => (
+              <Link key={x.id} href={`/cases/${x.id}`} style={{ display: 'block', padding: '18px 20px', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 4, color: '#fff' }}>
+                <div className="serif" style={{ fontSize: 17, lineHeight: 1.5 }}>“{x.q}”</div>
+                <div className="small" style={{ color: 'var(--dawn)', marginTop: 8, fontWeight: 600 }}>{x.id} · {x.t} →</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="ed-sec tint">
         <div className="pw">
           <div className="ed-kicker">Who it&apos;s for</div>

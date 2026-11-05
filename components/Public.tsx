@@ -22,6 +22,7 @@ export function PubNav({ me }: { me?: Me | null }) {
           <nav className="row hide-sm" style={{ gap: 22 }}>
             <Link href="/method" className="nl">방법론</Link>
             <Link href="/#approach" className="nl">진행 절차</Link>
+            <Link href="/cases" className="nl">사례</Link>
             <Link href="/solutions" className="nl">도입 안내</Link>
             <Link href="/method#foundations" className="nl">근거</Link>
           </nav>
@@ -50,6 +51,7 @@ export function PubFooter() {
             <Link href="/method#diagnosis">진단 기준</Link>
             <Link href="/method#stages">단계와 관문</Link>
             <Link href="/method#kpi">성과 측정</Link>
+            <Link href="/cases">사례집</Link>
           </div>
           <div>
             <h5>도입</h5>

@@ -14,6 +14,7 @@
 | --- | --- | --- |
 | `/` | 소개: 6단계 흐름, 원칙, 증거등급, 실험 순환, 근거 방법론, 사람과 AI, 성과 측정 | 불필요 |
 | `/method` | 방법론 상세: 단계별 멘티·멘토·AI 역할과 결과물, 진단 기준, 단계·관문, 전문가 패널, 근거 12가지 | 불필요 |
+| `/cases`, `/cases/[id]` | 사례집: 단계·트랙별 멘토링 사례 66건, B2B·PoC 플레이북, 3회차 단기 프로그램, 수행보고서 예시 | 불필요 |
 | `/solutions` | 도입 안내: 패키지 3종, 도입 절차, 결과물, FAQ, 도입 문의 | 불필요 |
 | `/login` | 로그인 (데모: 역할 선택) | - |
 | `/home` | 내 멘토링 대시보드 | 필요 |
@@ -95,3 +96,13 @@ gas/Code.gs         Google Apps Script 저장소
 
 - 로고(`components/Logo.tsx`, `app/icon.svg`)는 Keep121의 아치와 앰버 점을 잇고, 멘토의 안내를 뜻하는 상승 화살표를 더했습니다. 색상: Indigo `#23306B`, Dawn `#F2A541`, Pasture `#3E8E6E`.
 - 사진은 Unsplash 라이선스 무료 사진입니다. 출처는 `public/images/CREDITS.md`에 있습니다.
+
+## 사례집 데이터
+
+`public/data/cases.json`은 Joyhouse 스타트업 멘토링(`holyjoekang/joyhouse`의 `data/mentoring/mentoring.json`)에서 만듭니다. 원본이 바뀌면 다시 실행합니다.
+
+```bash
+python3 scripts/import_joyhouse_cases.py /path/to/joyhouse
+```
+
+사례는 에이전트 시뮬레이션으로 만든 것이며 실제 기업 기록이 아닙니다. 미팅 기록(meetings.json)은 실명 대화라 옮기지 않습니다.
