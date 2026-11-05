@@ -1,7 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { Icon } from '@/components/icons';
+import { StageBar } from '@/components/StageBar';
 import { ErrorBox, TopBar, useMe } from '@/components/ui';
 import { Overview } from '@/components/eng/Overview';
 import { CompanyTab } from '@/components/eng/CompanyTab';
@@ -12,21 +15,36 @@ import { AITab } from '@/components/eng/AITab';
 import { TimelineTab } from '@/components/eng/TimelineTab';
 import { ReportTab } from '@/components/eng/ReportTab';
 import { call } from '@/lib/client';
-import { STAGES } from '@/lib/methodology';
+import { INDUSTRY_TEMPLATES, STAGES } from '@/lib/methodology';
+import { allRedFlags, gradeLift } from '@/lib/scoring';
 import type { Bundle } from '@/lib/schema';
 
 const TABS = [
-  { k: 'overview', label: '진단 리포트' },
-  { k: 'company', label: '기업·이슈' },
-  { k: 'diagnosis', label: '진단' },
-  { k: 'sessions', label: '회차' },
-  { k: 'experiments', label: '실험 카드' },
-  { k: 'timeline', label: '사고 흐름' },
-  { k: 'report', label: '종합' },
-  { k: 'ai', label: 'AI 작업함', mentorOnly: true },
+  { k: 'overview', label: '진단 리포트', icon: 'target' },
+  { k: 'company', label: '기업·이슈', icon: 'building' },
+  { k: 'diagnosis', label: '진단', icon: 'search' },
+  { k: 'sessions', label: '회차', icon: 'file' },
+  { k: 'experiments', label: '실험 카드', icon: 'flask' },
+  { k: 'timeline', label: '사고 흐름', icon: 'pen' },
+  { k: 'report', label: '종합', icon: 'map' },
+  { k: 'ai', label: 'AI 작업함', icon: 'sparkle', mentorOnly: true },
 ] as const;
 type TabKey = (typeof TABS)[number]['k'];
 
+function journey(b: Bundle) {
+  const n = Math.min(6, Math.max(1, Number(b.program?.session_count ?? 3)));
+  const steps: { t: string; s: string; done: boolean }[] = [
+    { t: '사전진단', s: '자가진단·이슈', done: b.assessments.some((a) => a.rater === 'self') },
+  ];
+  for (let i = 1; i <= n; i++) {
+    const ses = b.sessions.find((x) => Number(x.round_no) === i);
+    steps.push({ t: `${i}차`, s: ses ? ses.date : i === 1 ? '진단·목표' : i === n ? '정리·로드맵' : '실행·점검', done: !!ses });
+  }
+  steps.push({ t: '종합', s: '리포트·로드맵', done: !!b.engagement.final_report });
+  steps.push({ t: '사후', s: '3·6개월', done: false });
+  const nowIdx = steps.findIndex((x) => !x.done);
+  return { steps, nowIdx };
+}
 
 export default function EngagementPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,21 +74,14 @@ export default function EngagementPage() {
       <TopBar me={me} />
       <div className="wrap">
         <ErrorBox error={error} />
+        {b && <Header b={b} />}
         {b && (
           <>
-            <div className="row between">
-              <div>
-                <h1 style={{ marginBottom: 2 }}>{b.company.name}</h1>
-                <div className="muted small">
-                  {b.program ? `${b.program.org_name} · ${b.program.name}` : '프로그램 미지정'} · 멘토 {b.engagement.mentor_email} · 내 역할{' '}
-                  <strong>{b.role === 'mentor' ? '멘토' : b.role === 'mentee' ? '멘티' : '기관'}</strong>
-                </div>
-              </div>
-              {b.engagement.stage && <span className="badge accent">{b.engagement.stage} {STAGES.find((s) => s.code === b.engagement.stage)?.name}</span>}
-            </div>
-            <div className="tabs" style={{ marginTop: 12 }}>
+            <div className="tabs">
               {TABS.filter((t) => !('mentorOnly' in t) || b.role === 'mentor').map((t) => (
-                <button key={t.k} className={tab === t.k ? 'on' : ''} onClick={() => go(t.k)}>{t.label}</button>
+                <button key={t.k} className={tab === t.k ? 'on' : ''} onClick={() => go(t.k)}>
+                  <Icon name={t.icon} size={15} /> {t.label}
+                </button>
               ))}
             </div>
             {tab === 'overview' && <Overview b={b} reload={reload} />}
@@ -83,6 +94,74 @@ export default function EngagementPage() {
             {tab === 'ai' && b.role === 'mentor' && <AITab b={b} reload={reload} />}
           </>
         )}
+      </div>
+    </>
+  );
+}
+
+function Header({ b }: { b: Bundle }) {
+  const e = b.engagement;
+  const { steps, nowIdx } = journey(b);
+  const goalQs = Array.from(new Set((e.goals ?? []).flatMap((g) => g.q_codes)));
+  const lifts = gradeLift(b.assessments, goalQs);
+  const doneExp = b.experiments.filter((x) => x.status === 'done').length;
+  const acked = b.sessions.filter((s) => String(s.mentee_ack) === 'true').length;
+  const flags = allRedFlags(e, b.company);
+  const stage = STAGES.find((s) => s.code === e.stage);
+  const kpis = [
+    { icon: 'stairs', label: '목표 문항 증거등급 상승', value: goalQs.length ? `${lifts.filter((l) => l.lifted).length} / ${goalQs.length}` : '목표 미설정', cls: '' },
+    { icon: 'flask', label: '실험 완료', value: `${doneExp} / ${b.experiments.length}`, cls: 'blue' },
+    { icon: 'pen', label: '멘티 확인한 회차', value: `${acked} / ${b.sessions.length}`, cls: 'warn' },
+    { icon: 'flag', label: '레드플래그', value: String(flags.length), cls: flags.length ? 'danger' : '' },
+  ];
+  const roleLabel = b.role === 'mentor' ? '멘토' : b.role === 'mentee' ? '멘티' : '기관';
+
+  return (
+    <>
+      <div className="xsmall muted" style={{ marginBottom: 8 }}><Link href="/home">내 멘토링</Link> / {b.company.name}</div>
+      <div className="hero-band">
+        <div className="row between" style={{ alignItems: 'flex-start' }}>
+          <div className="row" style={{ gap: 14 }}>
+            <span className="ichip lg" style={{ background: 'rgba(255,255,255,0.14)', color: '#fff', fontWeight: 800, fontSize: 18 }}>{b.company.name.slice(0, 1)}</span>
+            <div>
+              <h1 style={{ margin: 0, color: '#fff' }}>{b.company.name}</h1>
+              <div className="small muted">{b.company.summary || '한 줄 소개를 기업·이슈 탭에서 입력하세요'}</div>
+            </div>
+          </div>
+          <div className="row">
+            <span className="badge">{b.program ? `${b.program.org_name} · ${b.program.name}` : '프로그램 미지정'}</span>
+            <span className="badge">{INDUSTRY_TEMPLATES.find((t) => t.code === b.company.industry)?.name ?? '업종 미정'}</span>
+            <span className="badge accent">내 역할 · {roleLabel}</span>
+          </div>
+        </div>
+        <div className="grid grid-2" style={{ marginTop: 18, gap: 24, alignItems: 'end' }}>
+          <div>
+            <div className="small muted" style={{ marginBottom: 6 }}>성장 단계 <strong style={{ color: '#fff' }}>{e.stage} {stage?.name}</strong> — {stage?.question}</div>
+            <div style={{ filter: 'brightness(1.4)' }}><StageBar stage={e.stage} /></div>
+          </div>
+          <div className="small muted" style={{ textAlign: 'right' }}>멘토 {e.mentor_email} · 시작 {e.start_date}</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="stepper" style={{ ['--n' as string]: steps.length } as React.CSSProperties}>
+          {steps.map((s, i) => (
+            <div key={s.t} className={`st ${s.done ? 'done' : i === nowIdx ? 'now' : ''}`}>
+              <div className="dot">{s.done ? <Icon name="check" size={15} stroke={2.6} /> : i + 1}</div>
+              <div className="t">{s.t}</div>
+              <div className="s">{s.s}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-4" style={{ marginBottom: 18 }}>
+        {kpis.map((k) => (
+          <div key={k.label} className="stat">
+            <span className={`ichip ${k.cls}`}><Icon name={k.icon} /></span>
+            <div><div className="num" style={{ fontSize: 20 }}>{k.value}</div><div className="lbl">{k.label}</div></div>
+          </div>
+        ))}
       </div>
     </>
   );

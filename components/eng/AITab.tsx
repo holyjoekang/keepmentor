@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Status, copyText, downloadText, useAsync } from '@/components/ui';
+import { Icon } from '@/components/icons';
 import { call } from '@/lib/client';
 import { AXES, EVIDENCE_TYPES } from '@/lib/methodology';
 import { TASKS, deanonymize, missingHumanInputs, parseResult, type TaskType } from '@/lib/packets';
@@ -25,7 +26,7 @@ export function AITab({ b, reload }: TabProps) {
         사람이 먼저 써야 하는 항목이 비어 있으면 패킷을 만들 수 없습니다.
       </div>
       <div className="card">
-        <h2>AI 패킷 만들기</h2>
+        <div className="card-title"><span className="ichip ai"><Icon name="sparkle" /></span><h2>AI 패킷 만들기</h2></div>
         <div className="grid grid-2">
           <div>
             <label>작업 유형</label>

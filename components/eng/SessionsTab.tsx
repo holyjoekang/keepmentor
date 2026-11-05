@@ -104,15 +104,15 @@ function SessionCard({ b, s, onEdit, reload }: { b: TabProps['b']; s: Session; o
           {isMentor && <button onClick={onEdit}>수정</button>}
         </div>
       </div>
-      <div className="side-by-side" style={{ marginTop: 8 }}>
-        <div>
-          <div className="small muted">멘토가 쓴 핵심 3줄</div>
+      <div className="side-by-side" style={{ marginTop: 12 }}>
+        <div className="panel human">
+          <div className="panel-label" style={{ color: 'var(--accent)' }}>멘토가 쓴 핵심 3줄 · 사람</div>
           <div style={{ whiteSpace: 'pre-wrap' }}>{s.mentor_own_summary || <span className="muted">(미작성)</span>}</div>
           <div className="small muted" style={{ marginTop: 8 }}>다음 회차에서 확인할 것</div>
           <div>{s.mentor_next_check || '-'}</div>
         </div>
-        <div>
-          <div className="small muted">조언·권고</div>
+        <div className={`panel ${s.content_origin && s.content_origin !== 'human' ? 'ai' : ''}`}>
+          <div className="panel-label">조언·권고</div>
           <div style={{ whiteSpace: 'pre-wrap' }}>{s.advice_3lines || '-'}</div>
           <div className="small muted" style={{ marginTop: 8 }}>대표가 결정한 것</div>
           <div style={{ whiteSpace: 'pre-wrap' }}>{s.decisions || '-'}</div>

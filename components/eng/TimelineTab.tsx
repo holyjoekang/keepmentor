@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@/components/icons';
 import type { TabProps } from './types';
 
 // 사고 흐름: 사람이 쓴 내용만 시간 순으로 모아 본다 (설계서 8.4절)
@@ -24,12 +25,12 @@ export function TimelineTab({ b }: TabProps) {
 
   return (
     <div className="card">
-      <h2>사고 흐름</h2>
+      <div className="card-title"><span className="ichip "><Icon name="pen" /></span><h2>사고 흐름</h2></div>
       <p className="small muted">사람이 직접 쓴 내용만 모았습니다. 다른 멘토나 기관이 이어받을 때 이 흐름을 먼저 봅니다.</p>
       {!items.length && <div className="muted">아직 기록이 없습니다.</div>}
       <div className="timeline">
         {items.map((it, i) => (
-          <div className="item" key={i}>
+          <div className={`item ${it.who === '멘티' ? 'mentee' : ''}`} key={i}>
             <div className="small muted">{it.date} · {it.who}</div>
             <strong>{it.title}</strong>
             <div style={{ whiteSpace: 'pre-wrap' }}>{it.text}</div>

@@ -22,6 +22,7 @@ const req = (v: unknown, label: string) => {
 export interface HomeItem {
   eng_id: string; company: string; stage?: string; status: string; program?: string;
   next_date?: string; open_experiments: number; red_flags: number; mentor_email: string; mentee_emails: string[];
+  sessions_done: number; session_total: number; pending_acks: number; industry?: string;
 }
 
 export function createActions(store: Store, me: User) {
@@ -93,6 +94,10 @@ export function createActions(store: Store, me: User) {
           program: programs.find((p) => p.id === e.program_id)?.name,
           next_date: ss[0]?.next_date,
           open_experiments: exps.filter((x) => x.eng_id === e.id && x.status !== 'done').length,
+          sessions_done: ss.length,
+          session_total: Number(programs.find((p) => p.id === e.program_id)?.session_count ?? 3),
+          pending_acks: ss.filter((s) => String(s.mentee_ack) !== 'true').length,
+          industry: companies.find((c) => c.id === e.company_id)?.industry,
           red_flags: (e.red_flags ?? []).length,
           mentor_email: e.mentor_email, mentee_emails: e.mentee_emails ?? [],
         };

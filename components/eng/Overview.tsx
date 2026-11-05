@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Radar } from '@/components/Radar';
+import { Icon } from '@/components/icons';
+import { EvidenceBar } from '@/components/visuals';
 import { Status, useAsync } from '@/components/ui';
 import { call } from '@/lib/client';
 import { AXES, CORE_QUESTIONS, RED_FLAGS, RUNWAY_THRESHOLD_MONTHS, STAGES, gatesFor, type Stage } from '@/lib/methodology';
@@ -32,7 +34,7 @@ export function Overview({ b, reload }: TabProps) {
   return (
     <div className="grid grid-2">
       <div className="card">
-        <h2>축별 진단</h2>
+        <div className="card-title"><span className="ichip "><Icon name="target" /></span><h2>축별 진단</h2></div>
         <Radar self={self} mentor={mentor} />
         <table style={{ marginTop: 8 }}>
           <thead><tr><th>축</th><th>자가</th><th>멘토</th></tr></thead>
@@ -46,12 +48,13 @@ export function Overview({ b, reload }: TabProps) {
             ))}
           </tbody>
         </table>
-        <p className="small muted">점수는 입력 점수와 증거등급 상한 중 낮은 값입니다. 자가진단과 멘토 보정의 차이가 크면 1차에서 다룹니다.</p>
+        <div style={{ marginTop: 14 }}><div className="xsmall muted" style={{ fontWeight: 600, marginBottom: 6 }}>증거등급 분포 (멘토 보정 우선)</div><EvidenceBar grades={b.assessments.filter((a) => a.rater === (b.assessments.some((x) => x.rater === 'mentor') ? 'mentor' : 'self')).map((a) => String(a.evidence_grade))} /></div>
+        <p className="small muted" style={{ marginTop: 12 }}>점수는 입력 점수와 증거등급 상한 중 낮은 값입니다. 자가진단과 멘토 보정의 차이가 크면 1차에서 다룹니다.</p>
       </div>
 
       <div>
         <div className="card">
-          <h2>레드플래그</h2>
+          <div className="card-title"><span className="ichip danger"><Icon name="flag" /></span><h2>레드플래그</h2></div>
           <p className="small muted">하나라도 켜지면 점수와 상관없이 우선 개입 영역이 됩니다.</p>
           {RED_FLAGS.map((f) => {
             const isAuto = auto.includes(f.code);
@@ -69,7 +72,7 @@ export function Overview({ b, reload }: TabProps) {
         </div>
 
         <div className="card">
-          <h2>단계 관문</h2>
+          <div className="card-title"><span className="ichip blue"><Icon name="stairs" /></span><h2>단계 관문</h2></div>
           <p className="small muted">관문은 "외부 검증 증거 1건 이상"입니다. 무엇을 증거로 인정할지는 업종 템플릿이 정합니다.</p>
           {gates.map((g) => (
             <div key={g.to} className="qrow">
@@ -104,7 +107,7 @@ export function Overview({ b, reload }: TabProps) {
         </div>
 
         <div className="card">
-          <h2>멘토링 목표</h2>
+          <div className="card-title"><span className="ichip "><Icon name="compass" /></span><h2>멘토링 목표</h2></div>
           <p className="small muted">3회차 안에 달성 가능한 1~2개. 요청 이슈 1개 + 진단상 병목 1개를 권장합니다.</p>
           {goals.map((g, i) => (
             <div key={i} className="qrow">

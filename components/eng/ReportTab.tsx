@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Status, useAsync } from '@/components/ui';
+import { Icon } from '@/components/icons';
 import { call } from '@/lib/client';
 import { deanonymize } from '@/lib/packets';
 import type { TabProps } from './types';
@@ -17,7 +18,7 @@ export function ReportTab({ b, reload }: TabProps) {
   return (
     <div className="grid grid-2">
       <div className="card">
-        <h2>가장 크게 바뀐 점</h2>
+        <div className="card-title"><span className="ichip "><Icon name="stairs" /></span><h2>가장 크게 바뀐 점</h2></div>
         <p className="small muted">종합 리포트(J4)와 전문가 패널(J5) 패킷은 멘토와 멘티가 각자 이 칸을 쓴 뒤에 만들 수 있습니다.</p>
         <div className="side-by-side">
           <div><div className="small muted">멘토</div><div style={{ whiteSpace: 'pre-wrap' }}>{e.mentor_biggest_change || '-'}</div></div>
@@ -36,7 +37,7 @@ export function ReportTab({ b, reload }: TabProps) {
         )}
       </div>
       <div className="card">
-        <h2>종합 리포트</h2>
+        <div className="card-title"><span className="ichip blue"><Icon name="map" /></span><h2>종합 리포트</h2></div>
         {!r ? (
           <div className="muted">아직 없습니다. 멘토가 AI 작업함에서 J4 패킷을 처리해 가져오면 여기에 표시됩니다.</div>
         ) : (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { MODE, currentUser, logout, type Me } from '@/lib/client';
 import { CONTENT_ORIGINS } from '@/lib/methodology';
+import { Icon } from './icons';
 
 export function useMe() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
@@ -12,26 +13,34 @@ export function useMe() {
   useEffect(() => {
     currentUser().then((u) => {
       setMe(u);
-      if (!u) router.replace('/');
+      if (!u) router.replace('/login');
     });
   }, [router]);
   return me;
 }
 
-export function TopBar({ me }: { me?: Me | null }) {
+export function TopBar({ me, variant = 'app' }: { me?: Me | null; variant?: 'app' | 'public' }) {
   const router = useRouter();
+  const dark = variant === 'public';
   return (
-    <div className="topbar">
-      <div className="row">
-        <Link href="/home" className="brand">Keep <span>Mentor</span></Link>
-        {MODE === 'demo' && <span className="badge warn">데모 모드</span>}
+    <div className={`topbar${dark ? ' dark' : ''}`}>
+      <div className="row" style={{ gap: 18 }}>
+        <Link href={me ? '/home' : '/'} className="brand"><span className="mark">K</span>Keep <span className="m">Mentor</span></Link>
+        <Link href="/method" className="navlink hide-sm">방법론</Link>
+        <Link href="/#flow" className="navlink hide-sm">진행 절차</Link>
+        {me && <Link href="/home" className="navlink">내 멘토링</Link>}
+        {MODE === 'demo' && <span className="badge warn">데모</span>}
       </div>
-      {me && (
+      {me ? (
         <div className="row small">
-          <Link href="/guide" className="hide-sm">Claude 프로젝트 지침</Link>
-          {me.is_admin && <Link href="/admin">관리</Link>}
-          <span className="muted">{me.name}</span>
-          <button onClick={async () => { await logout(); router.replace('/'); }}>로그아웃</button>
+          <Link href="/guide" className="navlink hide-sm">Claude 프로젝트 지침</Link>
+          {me.is_admin && <Link href="/admin" className="navlink">관리</Link>}
+          <span className="badge"><Icon name="user" size={12} /> {me.name}</span>
+          <button onClick={async () => { await logout(); router.replace('/login'); }}>로그아웃</button>
+        </div>
+      ) : (
+        <div className="row">
+          <Link href="/login" className={`btn ${dark ? 'ghost-light' : ''}`}>로그인</Link>
         </div>
       )}
     </div>

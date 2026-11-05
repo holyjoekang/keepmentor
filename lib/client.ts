@@ -77,7 +77,7 @@ export async function call<K extends ActionName>(action: K, ...args: Parameters<
   const res = await fetch('/api/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, args }) });
   const data = await res.json();
   if (!data.ok) {
-    if (data.auth === false && typeof window !== 'undefined' && window.location.pathname !== '/') window.location.href = '/';
+    if (data.auth === false && typeof window !== 'undefined' && window.location.pathname !== '/login') window.location.href = '/login';
     throw new Error(data.error);
   }
   return data.result;
