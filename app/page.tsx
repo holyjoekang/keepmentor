@@ -1,104 +1,141 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { Icon } from '@/components/icons';
-import { TopBar } from '@/components/ui';
+import { PubFooter, PubNav, useOptionalMe } from '@/components/Public';
 import { EvidenceLadder, ExperimentLoop, FlowStrip, HumanAiSplit, KpiStack } from '@/components/visuals';
-import { currentUser, type Me } from '@/lib/client';
 import { FOUNDATIONS, PRINCIPLES } from '@/lib/method-content';
 
+const INSIGHTS = [
+  { img: '/images/diagnosis.jpg', tag: '진단', title: '주장이 아니라 증거로 현재 위치를 판정합니다', text: '7축·12문항 표준 진단과 증거등급(E0~E4)으로, 멘토가 달라도 같은 기준의 진단 리포트가 나옵니다.', href: '/method#diagnosis' },
+  { img: '/images/experiment.jpg', tag: '실행', title: '모든 회차는 2주짜리 실험으로 끝납니다', text: '가설 · 방법 · 성공 기준 · 기한을 정한 실험 카드로 조언을 실행으로 바꾸고, 다음 회차는 결과 점검으로 시작합니다.', href: '/method#exp' },
+  { img: '/images/outcome.jpg', tag: '성과', title: '멘토링 횟수가 아니라 변화를 보고합니다', text: '목표 문항의 증거등급 상승과 3·6개월 후 후속 성과로, 기관이 예산의 근거를 갖게 됩니다.', href: '/method#kpi' },
+];
+
+const AUDIENCE = [
+  { icon: 'building', title: '창업지원기관', text: '창조경제혁신센터, 창업보육센터, 대학 창업지원단. 멘토 풀마다 다른 멘토링 품질을 하나의 기준으로 맞춥니다.' },
+  { icon: 'chart', title: '액셀러레이터·투자사', text: 'TIPS 운영사, AC, 초기 VC. 포트폴리오의 단계와 병목을 같은 언어로 보고, 다음 자금 트랙을 준비시킵니다.' },
+  { icon: 'shield', title: '공공기관·지자체', text: '창업 지원사업 운영 기관. 멘토링 결과를 횟수가 아닌 변화량과 후속 성과로 보고합니다.' },
+  { icon: 'users', title: '기업·개인 멘토', text: '오픈이노베이션 프로그램과 전문 멘토. 개인의 경험을 검증된 절차와 기록으로 확장합니다.' },
+];
+
 export default function Landing() {
-  const [me, setMe] = useState<Me | null>(null);
-  useEffect(() => { currentUser().then(setMe).catch(() => undefined); }, []);
-
+  const me = useOptionalMe();
   return (
-    <>
-      <TopBar me={me} variant="public" />
+    <div className="pub">
+      <PubNav me={me} />
 
-      <section className="landing-hero">
-        <div className="wrap" style={{ padding: 0 }}>
-          <div className="eyebrow">스타트업 멘토링 방법론</div>
-          <h1>감이 아니라 증거로,<br />조언이 아니라 실험으로.</h1>
-          <p className="lead">
-            Keep Mentor는 모든 멘토링을 같은 기준으로 진단하고, 2주 단위 실험으로 실행하며, 그 변화를 증거등급으로 측정합니다.
-            검증된 창업 방법론과 국내 창업지원 제도의 평가 구조를 바탕으로 설계했습니다.
-          </p>
-          <div className="row" style={{ marginTop: 26, gap: 10 }}>
-            <Link href="/method" className="btn primary lg">방법론 자세히 보기 <Icon name="arrow" size={16} /></Link>
-            <Link href={me ? '/home' : '/login'} className="btn ghost-light lg">{me ? '내 멘토링으로' : '멘토링 시작하기'}</Link>
+      <section className="ed-hero" style={{ backgroundImage: 'url(/images/hero.jpg)' }}>
+        <div className="pw">
+          <div className="ed-kicker">Startup Mentoring Methodology</div>
+          <h1 className="serif" style={{ marginTop: 18 }}>멘토링의 품질을<br />증거로 증명합니다.</h1>
+          <p className="lead">Keep Mentor는 검증된 창업 방법론과 국내 창업지원 제도의 평가 구조를 하나의 절차로 엮은 스타트업 멘토링 방법론이자 운영 도구입니다. 진단하고, 실험하고, 변화를 측정합니다.</p>
+          <div className="row" style={{ marginTop: 28, gap: 12 }}>
+            <Link href="/solutions#contact" className="btn dawn lg">도입 문의 <Icon name="arrow" size={16} /></Link>
+            <Link href="/method" className="btn line-light lg">방법론 살펴보기</Link>
           </div>
-          <div className="pill-row">
-            <span>7축 · 12문항 표준 진단</span><span>증거등급 E0–E4</span><span>단계 관문 S0–S4</span><span>2주 실험 카드</span><span>사람 우선 기록</span>
+          <div className="ed-facts">
+            <div><strong>6단계</strong><span>사전진단부터 사후 추적까지</span></div>
+            <div><strong>12문항</strong><span>7개 축의 표준 진단</span></div>
+            <div><strong>E0–E4</strong><span>증거등급에 따른 점수 상한</span></div>
+            <div><strong>12개</strong><span>참고한 검증 방법론</span></div>
           </div>
         </div>
       </section>
 
-      <section className="section" id="flow">
-        <div className="wrap" style={{ padding: 0 }}>
-          <div className="section-head">
-            <div className="eyebrow">진행 절차</div>
-            <h2>6단계로 진행되고, 매 단계마다 남는 결과물이 정해져 있습니다</h2>
-            <p>사전진단부터 사후 추적까지 약 6~8주가 걸립니다. 어느 기관의 어느 멘토가 맡아도 같은 순서와 같은 형식으로 기록됩니다. 단계를 누르면 상세 설명으로 이동합니다.</p>
+      <section className="ed-sec">
+        <div className="pw">
+          <div className="ed-kicker">What we do</div>
+          <h2 className="ed-h2 serif">멘토 개인의 경험에 기대던 멘토링을,<br />누가 맡아도 같은 품질의 프로그램으로.</h2>
+          <div className="ed-cards" style={{ marginTop: 40 }}>
+            {INSIGHTS.map((c) => (
+              <Link key={c.tag} href={c.href} className="ed-card">
+                <div className="img" style={{ backgroundImage: `url(${c.img})` }} />
+                <div className="tag">{c.tag}</div>
+                <h3 className="serif">{c.title}</h3>
+                <p>{c.text}</p>
+                <span className="textlink">자세히 <Icon name="arrow" size={15} /></span>
+              </Link>
+            ))}
           </div>
+        </div>
+      </section>
+
+      <section className="ed-sec tint" id="approach">
+        <div className="pw">
+          <div className="ed-kicker">Our approach</div>
+          <h2 className="ed-h2 serif">6단계로 진행되고, 단계마다 남는 결과물이 정해져 있습니다</h2>
+          <p className="ed-intro">약 6~8주. 어느 기관의 어느 멘토가 맡아도 같은 순서, 같은 형식으로 기록됩니다. 3·4단계는 회차마다 반복되는 실험 순환입니다.</p>
           <FlowStrip linkBase="/method" />
-          <div className="row small muted" style={{ marginTop: 14 }}>
-            <span className="badge accent">강조 테두리</span> 3·4단계는 회차마다 반복되는 실험 순환입니다.
+        </div>
+      </section>
+
+      <section className="ed-sec">
+        <div className="pw ed-split">
+          <div className="photo" style={{ backgroundImage: 'url(/images/mentoring.jpg)' }} />
+          <div>
+            <div className="ed-kicker">Principles</div>
+            <h2 className="ed-h2 serif">네 가지 원칙</h2>
+            <ul className="ed-list">
+              {PRINCIPLES.map((p, i) => (
+                <li key={p.title}><span className="n">0{i + 1}</span><div><h4>{p.title}</h4><p>{p.text}</p></div></li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      <section className="section alt">
-        <div className="wrap" style={{ padding: 0 }}>
-          <div className="section-head">
-            <div className="eyebrow">네 가지 원칙</div>
-            <h2>멘토 개인의 경험에만 기대지 않습니다</h2>
+      <section className="ed-sec tint">
+        <div className="pw ed-split">
+          <div>
+            <div className="ed-kicker">Evidence</div>
+            <h2 className="ed-h2 serif">점수는 근거의 종류만큼만 올라갑니다</h2>
+            <p className="ed-intro" style={{ marginBottom: 0 }}>"고객이 좋다고 했다"와 "고객이 돈을 냈다"는 다른 증거입니다. 모든 문항에 근거를 붙이고, 근거의 등급이 점수 상한을 정합니다. 기관과 업종이 달라도 비교할 수 있는 공통 기준입니다.</p>
           </div>
-          <div className="grid grid-4">
-            {PRINCIPLES.map((p) => (
-              <div key={p.title} className="card flat" style={{ margin: 0 }}>
-                <span className="ichip lg"><Icon name={p.icon} size={22} /></span>
-                <h3 style={{ marginTop: 14 }}>{p.title}</h3>
-                <p className="small muted">{p.text}</p>
+          <div className="card" style={{ margin: 0 }}><EvidenceLadder /></div>
+        </div>
+      </section>
+
+      <section className="ed-sec">
+        <div className="pw ed-split">
+          <div className="card flat" style={{ margin: 0, display: 'flex', justifyContent: 'center' }}><ExperimentLoop /></div>
+          <div>
+            <div className="ed-kicker">Experiments</div>
+            <h2 className="ed-h2 serif">조언은 잴 수 없지만, 실험은 잴 수 있습니다</h2>
+            <p className="ed-intro" style={{ marginBottom: 12 }}>실험 카드는 실행률, 성공률, 학습 속도로 성과를 보여줍니다. 대표가 직접 적은 결과를 보고 Pivot · Persevere · Kill을 결정합니다.</p>
+            <p className="small faint">근거: 고객 개발(Steve Blank), 린 스타트업(Eric Ries), Jobs To Be Done(Clayton Christensen)</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="ed-sec tint">
+        <div className="pw">
+          <div className="ed-kicker">Who it&apos;s for</div>
+          <h2 className="ed-h2 serif">멘토링 프로그램을 운영하는 모든 조직을 위해</h2>
+          <div className="ed-split" style={{ marginBottom: 40, alignItems: 'stretch' }}>
+            <div className="photo" style={{ backgroundImage: 'url(/images/program.jpg)', aspectRatio: '16 / 9' }} />
+            <p className="ed-intro" style={{ alignSelf: 'center' }}>기관 → 프로그램 → 멘토링 건으로 설정만 바꿔 씁니다. 회차 수와 간격은 프로그램마다 다르게, 진단 기준과 기록 형식은 모두 같게. 같은 기업이 여러 기관에서 받은 멘토링도 동의를 받아 하나의 이력으로 이어집니다.</p>
+          </div>
+          <div className="aud">
+            {AUDIENCE.map((a) => (
+              <div key={a.title}>
+                <span className="ichip"><Icon name={a.icon} /></span>
+                <h4>{a.title}</h4>
+                <p>{a.text}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="section">
-        <div className="wrap grid grid-2" style={{ padding: 0, alignItems: 'center', gap: 40 }}>
-          <div>
-            <div className="eyebrow">증거등급</div>
-            <h2 style={{ fontSize: 26, fontWeight: 800 }}>점수는 근거의 종류만큼만 올라갑니다</h2>
-            <p className="muted">"고객이 좋다고 했다"와 "고객이 돈을 냈다"는 다른 증거입니다. 모든 문항에 근거를 붙이고, 근거의 등급이 점수 상한을 정합니다. 기관과 업종이 달라도 비교할 수 있는 공통 기준입니다.</p>
-          </div>
-          <div className="card" style={{ margin: 0 }}><EvidenceLadder /></div>
-        </div>
-      </section>
-
-      <section className="section alt">
-        <div className="wrap grid grid-2" style={{ padding: 0, alignItems: 'center', gap: 40 }}>
-          <div className="card flat" style={{ margin: 0, display: 'flex', justifyContent: 'center' }}><ExperimentLoop /></div>
-          <div>
-            <div className="eyebrow">실험 카드</div>
-            <h2 style={{ fontSize: 26, fontWeight: 800 }}>매 회차는 다음 2주의 실험으로 끝납니다</h2>
-            <p className="muted">조언은 기록해도 성과를 잴 수 없습니다. 실험은 실행률, 성공률, 학습 속도로 잴 수 있습니다. 다음 회차는 실험 결과 점검으로 시작하고, 대표가 직접 적은 결과를 보고 Pivot · Persevere · Kill을 결정합니다.</p>
-            <p className="small faint">근거: 고객 개발(Steve Blank), 린 스타트업(Eric Ries), Jobs To Be Done(Clayton Christensen)</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="wrap" style={{ padding: 0 }}>
-          <div className="section-head">
-            <div className="eyebrow">근거</div>
-            <h2>검증된 방법론과 국내 제도의 평가 구조를 따랐습니다</h2>
-            <p>새로 만든 이론이 아닙니다. 실리콘밸리 창업 방법론, 스케일업 경영 프레임워크, 정부 창업지원사업의 평가 구조, 코칭·교육 평가 모델에서 검증된 요소를 골라 하나의 절차로 엮었습니다.</p>
-          </div>
+      <section className="ed-sec">
+        <div className="pw">
+          <div className="ed-kicker">Foundations</div>
+          <h2 className="ed-h2 serif">검증된 방법론과 국내 제도의 평가 구조를 따랐습니다</h2>
+          <p className="ed-intro">실리콘밸리 창업 방법론, 스케일업 경영 프레임워크, 정부 창업지원사업의 평가 구조, 코칭·교육 평가 모델에서 검증된 요소를 골라 하나의 절차로 엮었습니다.</p>
           <div className="grid grid-3">
             {FOUNDATIONS.slice(0, 6).map((f) => (
-              <div key={f.id} className="fw-card">
+              <div key={f.id} className="fw-card" style={{ borderRadius: 4 }}>
                 <strong>{f.name}</strong>
                 <div className="src">{f.source}</div>
                 <div className="small">{f.idea}</div>
@@ -106,47 +143,42 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 18 }}>
-            <Link href="/method#foundations" className="btn">근거 12가지 모두 보기 <Icon name="arrow" size={16} /></Link>
-          </div>
+          <div style={{ marginTop: 22 }}><Link href="/method#foundations" className="textlink">근거 12가지 모두 보기 <Icon name="arrow" size={15} /></Link></div>
         </div>
       </section>
 
-      <section className="section alt">
-        <div className="wrap" style={{ padding: 0 }}>
-          <div className="section-head">
-            <div className="eyebrow">사람과 AI</div>
-            <h2>AI가 대신 멘토링하지 않도록 설계했습니다</h2>
-            <p>AI가 처음부터 끝까지 자동으로 돌면 회의에서 무엇을 논의했는지, 왜 다음 단계로 넘어가는지 같은 사고 과정이 빠집니다. 그래서 핵심 기록은 사람이 먼저 쓰고, 그 칸이 비어 있으면 다음 단계로 넘어갈 수 없습니다.</p>
-          </div>
-          <HumanAiSplit />
+      <section className="ed-sec ink">
+        <div className="pw">
+          <div className="ed-kicker">People first</div>
+          <h2 className="ed-h2 serif" style={{ color: '#fff' }}>AI가 대신 멘토링하지 않도록 설계했습니다</h2>
+          <p className="ed-intro">AI가 처음부터 끝까지 자동으로 돌면 회의에서 무엇을 논의했는지, 왜 다음 단계로 넘어가는지 같은 사고 과정이 빠집니다. 핵심 기록은 사람이 먼저 쓰고, 그 칸이 비어 있으면 다음 단계로 넘어갈 수 없습니다.</p>
+          <div style={{ color: 'var(--text)' }}><HumanAiSplit /></div>
         </div>
       </section>
 
-      <section className="section">
-        <div className="wrap grid grid-2" style={{ padding: 0, gap: 40, alignItems: 'center' }}>
+      <section className="ed-sec">
+        <div className="pw ed-split">
           <div>
-            <div className="eyebrow">결과 측정</div>
-            <h2 style={{ fontSize: 26, fontWeight: 800 }}>멘토링 횟수가 아니라 변화를 보고합니다</h2>
-            <p className="muted">성과지표는 Kirkpatrick 교육 평가 모델의 네 수준에 맞춰 나눴습니다. 만족도는 멘토 품질 관리에만 쓰고, 성과는 증거등급이 실제로 올랐는지와 3·6개월 뒤의 후속 성과로 봅니다.</p>
+            <div className="ed-kicker">Measurement</div>
+            <h2 className="ed-h2 serif">네 층위로 측정하고 보고합니다</h2>
+            <p className="ed-intro" style={{ marginBottom: 0 }}>Kirkpatrick 교육 평가 모델의 네 수준에 맞췄습니다. 만족도는 멘토 품질 관리에만 쓰고, 성과는 증거등급 상승과 3·6개월 뒤의 후속 성과로 봅니다.</p>
           </div>
           <KpiStack />
         </div>
       </section>
 
-      <section className="landing-hero" style={{ padding: '56px 16px' }}>
-        <div className="wrap row between" style={{ padding: 0 }}>
-          <div>
-            <h2 style={{ fontSize: 26, fontWeight: 800 }}>방법론을 끝까지 읽어 보세요</h2>
-            <p style={{ color: 'rgba(255,255,255,0.75)', margin: 0 }}>단계별로 누가 무엇을 쓰고, 어떤 결과물이 남는지 모두 공개합니다.</p>
-          </div>
-          <div className="row">
-            <Link href="/method" className="btn primary lg">방법론 상세</Link>
-            <Link href={me ? '/home' : '/login'} className="btn ghost-light lg">{me ? '내 멘토링' : '로그인'}</Link>
+      <section className="ed-cta" style={{ backgroundImage: 'url(/images/city.jpg)' }}>
+        <div className="pw">
+          <div className="ed-kicker">Get started</div>
+          <h2 className="ed-h2 serif" style={{ color: '#fff' }}>귀 기관의 멘토링 프로그램에<br />Keep Mentor를 도입하세요.</h2>
+          <p style={{ color: 'rgba(255,255,255,0.8)', maxWidth: 620, fontSize: 17 }}>파일럿 한 기수부터 시작할 수 있습니다. 방법론, 운영 도구, 멘토 온보딩, 성과 보고 양식을 함께 제공합니다.</p>
+          <div className="row" style={{ gap: 12, marginTop: 24 }}>
+            <Link href="/solutions" className="btn dawn lg">도입 안내 보기</Link>
+            <Link href="/solutions#contact" className="btn line-light lg">도입 문의</Link>
           </div>
         </div>
       </section>
-      <footer className="footer"><div className="wrap" style={{ padding: 0 }}>Keep Mentor · Keep 브랜드의 멘토링 프로토타입. 소개한 저자·기관과 제휴 관계는 없으며, 각 방법론에서 검증된 요소를 참고해 설계했습니다.</div></footer>
-    </>
+      <PubFooter />
+    </div>
   );
 }

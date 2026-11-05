@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { MODE, currentUser, logout, type Me } from '@/lib/client';
 import { CONTENT_ORIGINS } from '@/lib/methodology';
 import { Icon } from './icons';
+import { Logo } from './Logo';
 
 export function useMe() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
@@ -25,7 +26,7 @@ export function TopBar({ me, variant = 'app' }: { me?: Me | null; variant?: 'app
   return (
     <div className={`topbar${dark ? ' dark' : ''}`}>
       <div className="row" style={{ gap: 18 }}>
-        <Link href={me ? '/home' : '/'} className="brand"><span className="mark">K</span>Keep <span className="m">Mentor</span></Link>
+        <Link href={me ? '/home' : '/'} className="brand"><Logo size={28} light={dark} /></Link>
         <Link href="/method" className="navlink hide-sm">방법론</Link>
         <Link href="/#flow" className="navlink hide-sm">진행 절차</Link>
         {me && <Link href="/home" className="navlink">내 멘토링</Link>}

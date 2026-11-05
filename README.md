@@ -14,6 +14,7 @@
 | --- | --- | --- |
 | `/` | 소개: 6단계 흐름, 원칙, 증거등급, 실험 순환, 근거 방법론, 사람과 AI, 성과 측정 | 불필요 |
 | `/method` | 방법론 상세: 단계별 멘티·멘토·AI 역할과 결과물, 진단 기준, 단계·관문, 전문가 패널, 근거 12가지 | 불필요 |
+| `/solutions` | 도입 안내: 패키지 3종, 도입 절차, 결과물, FAQ, 도입 문의 | 불필요 |
 | `/login` | 로그인 (데모: 역할 선택) | - |
 | `/home` | 내 멘토링 대시보드 | 필요 |
 | `/eng/[id]` | 멘토링 건: 진행 단계, 핵심 지표, 8개 탭 | 필요 |
@@ -46,6 +47,7 @@ http://localhost:3000 에서 데모 모드로 열립니다.
 | `GAS_URL` | Apps Script 웹앱 배포 URL (`.../exec`) |
 | `GAS_SECRET` | Apps Script 스크립트 속성 `SECRET`과 같은 값 |
 | `SESSION_SECRET` | 로그인 쿠키 서명용 임의의 긴 문자열 |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | 도입 문의를 받을 이메일 (없으면 문의 버튼이 비활성화됨, 데모 모드에서도 설정 가능) |
 
 ## Google Sheets 연결 (live 모드)
 
@@ -88,3 +90,8 @@ lib/actions.ts      비즈니스 규칙과 권한 (live는 서버, demo는 브�
 lib/store.ts        저장소 어댑터 (Apps Script / localStorage)
 gas/Code.gs         Google Apps Script 저장소
 ```
+
+## 브랜드와 사진
+
+- 로고(`components/Logo.tsx`, `app/icon.svg`)는 Keep121의 아치와 앰버 점을 잇고, 멘토의 안내를 뜻하는 상승 화살표를 더했습니다. 색상: Indigo `#23306B`, Dawn `#F2A541`, Pasture `#3E8E6E`.
+- 사진은 Unsplash 라이선스 무료 사진입니다. 출처는 `public/images/CREDITS.md`에 있습니다.
