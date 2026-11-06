@@ -324,3 +324,63 @@ pre.packet { white-space: pre-wrap; word-break: break-word; background: var(--su
   .ed-hero { min-height: 560px; }
 }
 @media (max-width: 560px) { .aud { grid-template-columns: 1fr; } .pub-nav .hide-sm { display: none; } .pw { padding: 0 16px; } }
+
+/* ===== 멘티용 진단 결과 설명지 ===== */
+.brief-wrap { max-width: 900px; }
+.brief { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 32px 36px; box-shadow: var(--shadow); }
+.brief-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 14px; border-bottom: 2px solid var(--text); margin-bottom: 6px; flex-wrap: wrap; }
+.brief-sec { padding: 14px 0; border-bottom: 1px solid var(--border); break-inside: avoid; }
+.brief-sec h3 { display: flex; align-items: center; gap: 8px; font-size: 15.5px; margin: 0 0 8px; }
+.brief-sec p { font-size: 14px; margin: 0 0 6px; }
+.brief-sec ul, .brief-sec ol { margin: 0; padding-left: 20px; font-size: 14px; }
+.brief-sec li { margin: 4px 0; }
+.brief-n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.brief-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--text-2); margin-top: 6px; }
+.brief-legend b { color: var(--accent); }
+.brief-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; border-bottom: 1px solid var(--border); }
+.brief-grid > .brief-sec { border-bottom: none; }
+.brief-radar { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
+.brief-radar table { max-width: 260px; }
+.brief-radar td { padding: 3px 6px; }
+.brief-stage { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.brief-stage b { color: var(--accent); margin-right: 4px; }
+.brief-stage span { font-size: 14px; font-weight: 500; color: var(--text-2); margin-left: 6px; }
+.brief-table th, .brief-table td { padding: 6px; }
+.brief-write { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.brief-write span { font-size: 12.5px; color: var(--text-2); font-weight: 600; margin-top: 6px; }
+.brief-write i { display: block; height: 26px; border-bottom: 1px dashed var(--border-strong); }
+.brief-mentee { background: var(--green-soft); border-radius: 6px; padding: 14px 16px; margin-top: 14px; border-bottom: none; }
+.brief-mentee h3 { color: var(--green); }
+.brief-foot { margin-top: 14px; }
+@media (max-width: 700px) { .brief { padding: 20px 16px; } .brief-grid { grid-template-columns: 1fr; gap: 0; } }
+@media print {
+  @page { size: A4; margin: 10mm; }
+  html, body { background: #fff !important; }
+  .brief-sec > p.xsmall { display: none; }
+  .no-print { display: none !important; }
+  body { background: #fff; font-size: 12px; }
+  .wrap.brief-wrap { padding: 0; max-width: none; }
+  .brief { border: none; box-shadow: none; padding: 0; }
+  .brief-head { padding-bottom: 6px; }
+  .brief-head h1 { font-size: 18px !important; }
+  .brief-sec { padding: 5px 0; }
+  .brief-sec h3 { font-size: 12.5px; margin-bottom: 3px; }
+  .brief-sec p, .brief-sec ul, .brief-sec ol, .brief-sec li, .brief-table, .brief .panel p, .brief .panel li { font-size: 10.5px !important; line-height: 1.45; }
+  .brief-sec li { margin: 1px 0; }
+  .brief-legend { font-size: 9.5px; gap: 2px 10px; margin-top: 2px; }
+  .brief-grid { grid-template-columns: 1.4fr 1fr; gap: 12px; }
+  .brief-radar { flex-direction: row; align-items: center; gap: 6px; padding: 2px 0; }
+  .brief-radar svg { max-width: 150px !important; }
+  .brief-radar .row { display: none; }
+  .brief-radar table td { padding: 1px 4px; font-size: 10px; }
+  .brief-table th, .brief-table td { padding: 3px 4px; }
+  .brief .panel { padding: 8px 10px; }
+  .brief-write { margin-top: 4px; gap: 2px; }
+  .brief-write span { font-size: 10px; margin-top: 3px; }
+  .brief-write i { height: 13px; }
+  .brief-mentee { padding: 8px 12px; margin-top: 6px; }
+  .brief-n { width: 17px; height: 17px; font-size: 10px; }
+  .brief-foot { margin-top: 6px; font-size: 9px; }
+  .xsmall { font-size: 9.5px; }
+  .brief .panel { background: #f4f6fa !important; }
+}

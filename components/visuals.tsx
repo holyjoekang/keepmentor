@@ -39,7 +39,7 @@ export function EvidenceLadder() {
           </div>
         ))}
       </div>
-      <p className="small muted" style={{ marginTop: 12 }}>대표가 4점이라고 적어도 근거가 지인 인터뷰뿐이면 2점으로 확정됩니다. 자가진단은 흔히 부풀려지기 때문에, 근거의 종류가 점수의 상한을 정합니다.</p>
+      <p className="small muted" style={{ marginTop: 12 }}>대표가 4점이라고 적어도 근거가 지인 인터뷰뿐이면 2점으로 확정됩니다. 자가진단은 흔히 부풀려지기 때문에, 근거의 종류가 점수의 상한을 정합니다. 단, 대표 주당 가용시간(M0)처럼 사실을 입력하는 문항은 상한을 걸지 않습니다.</p>
     </div>
   );
 }

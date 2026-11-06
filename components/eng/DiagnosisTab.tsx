@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Origin, Status, useAsync } from '@/components/ui';
 import { call } from '@/lib/client';
-import { AXES, CORE_QUESTIONS, EVIDENCE_TYPES, GRADE_CAP, gradeOf } from '@/lib/methodology';
+import { AXES, CAP_EXEMPT, CORE_QUESTIONS, EVIDENCE_TYPES, GRADE_CAP, gradeOf } from '@/lib/methodology';
 import type { TabProps } from './types';
 
 interface Item { q_code: string; score_input: number; evidence_type: string; evidence_note: string; override_reason: string }
@@ -56,8 +56,9 @@ export function DiagnosisTab({ b, reload }: TabProps) {
           {CORE_QUESTIONS.filter((q) => q.axis === ax.code).map((q) => {
             const it = items[q.code];
             const grade = gradeOf(it.evidence_type);
-            const cap = GRADE_CAP[grade];
-            const capped = it.score_input > cap;
+            const exempt = CAP_EXEMPT.has(q.code);
+            const cap = exempt ? 5 : GRADE_CAP[grade];
+            const capped = !exempt && it.score_input > cap;
             const selfRow = b.assessments.find((a) => a.rater === 'self' && Number(a.round) === round && a.q_code === q.code);
             const myRow = b.assessments.find((a) => a.rater === rater && Number(a.round) === round && a.q_code === q.code);
             return (
@@ -66,7 +67,7 @@ export function DiagnosisTab({ b, reload }: TabProps) {
                   <strong>{q.code} · {q.text}</strong>
                   <span className="row">
                     <Origin origin={myRow?.origin} />
-                    <span className={`badge ${capped ? 'warn' : ''}`}>{grade} · 상한 {cap}{capped ? ` → ${cap}점으로 확정` : ''}</span>
+                    {exempt ? <span className="badge">사실 입력 · 상한 없음</span> : <span className={`badge ${capped ? 'warn' : ''}`}>{grade} · 상한 {cap}{capped ? ` → ${cap}점으로 확정` : ''}</span>}
                   </span>
                 </div>
                 <div className="scale" style={{ marginTop: 6 }}>

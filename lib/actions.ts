@@ -149,7 +149,7 @@ export function createActions(store: Store, me: User) {
         if (!CORE_QUESTIONS.some((q) => q.code === it.q_code)) continue;
         const s = Number(it.score_input);
         if (!(s >= 1 && s <= 5)) continue;
-        const { grade, final } = finalScore(s, it.evidence_type);
+        const { grade, final } = finalScore(s, it.evidence_type, it.q_code);
         const row = {
           q_code: it.q_code, score_input: s, evidence_type: it.evidence_type, evidence_note: it.evidence_note ?? '',
           evidence_grade: grade, score_final: final, override_reason: it.override_reason ?? '', updated_at: nowIso(),
@@ -313,7 +313,7 @@ export function createActions(store: Store, me: User) {
           if (!accepted.includes(g.q_code)) continue;
           const row = rows.filter((r) => r.q_code === g.q_code).sort((a, b) => Number(b.round) - Number(a.round))[0];
           if (!row) continue;
-          const { grade, final } = finalScore(Number(row.score_input), g.suggested_type);
+          const { grade, final } = finalScore(Number(row.score_input), g.suggested_type, row.q_code);
           await store.update<Assessment>('Assessments', row.id, { evidence_type: g.suggested_type, evidence_grade: grade, score_final: final, origin: 'ai_edited', updated_at: nowIso() });
         }
       }

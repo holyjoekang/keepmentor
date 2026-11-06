@@ -37,7 +37,7 @@ export async function seedDemo(store: Store) {
     ['C3', 2, 'none', '측정 전'], ['F1', 3, 'internal', '현금 4천만 원, 월 800만 원 지출'], ['N1', 2, 'none', '지표 미정'],
   ];
   for (const [q, s, t, note] of selfScores) {
-    const { grade, final } = finalScore(s, t);
+    const { grade, final } = finalScore(s, t, q);
     const row: Assessment = { id: newId('ASM'), eng_id: eng.id, round: 0, rater: 'self', q_code: q, score_input: s, evidence_type: t, evidence_note: note, evidence_grade: grade, score_final: final, origin: 'human', updated_at: nowIso() };
     await store.insert('Assessments', row);
   }

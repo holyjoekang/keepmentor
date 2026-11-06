@@ -32,6 +32,14 @@ export function Overview({ b, reload }: TabProps) {
   const lifts = gradeLift(b.assessments, Array.from(new Set((e.goals ?? []).flatMap((g) => g.q_codes))));
 
   return (
+    <div>
+    <div className="card row between" style={{ background: 'var(--accent-soft)', borderColor: 'transparent' }}>
+      <div>
+        <strong>멘티용 진단 결과 설명지</strong>
+        <div className="small muted">1차 미팅에서 설명할 순서(단계 → 강점 → 판단 차이 → 위험 → 병목 → 목표 → 2주 실험)대로 한 장에 정리합니다.</div>
+      </div>
+      <a href={`/eng/${e.id}/brief`} className="btn primary"><Icon name="file" size={15} /> 설명지 열기</a>
+    </div>
     <div className="grid grid-2">
       <div className="card">
         <div className="card-title"><span className="ichip "><Icon name="target" /></span><h2>축별 진단</h2></div>
@@ -156,6 +164,7 @@ export function Overview({ b, reload }: TabProps) {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

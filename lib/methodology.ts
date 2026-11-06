@@ -90,6 +90,9 @@ export const EVIDENCE_TYPES = [
 export type EvidenceType = (typeof EVIDENCE_TYPES)[number]['code'];
 export type EvidenceGrade = 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
 
+// 사실 입력 문항: 증거 상한을 걸지 않는다 (예: 대표 주당 가용시간)
+export const CAP_EXEMPT = new Set(['M0']);
+
 export const GRADE_CAP: Record<EvidenceGrade, number> = { E0: 2, E1: 2, E2: 3, E3: 4, E4: 5 };
 
 export function gradeOf(type: string | undefined): EvidenceGrade {

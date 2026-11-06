@@ -3,7 +3,7 @@
 // 돌아온 JSON을 다시 앱에 붙여 넣는다.
 
 import { CORE_QUESTIONS, ISSUE_CODES, STAGES, gatesFor } from './methodology';
-import { axisScores, effectiveScores } from './scoring';
+import { axisScores, effectiveScores, scoreOf } from './scoring';
 import type { Bundle } from './schema';
 
 export const TASKS = {
@@ -68,8 +68,8 @@ function anonymized(b: Bundle) {
     scores: CORE_QUESTIONS.map((q) => ({
       q_code: q.code,
       question: q.text,
-      self: eff[q.code].self ? { score: eff[q.code].self!.score_final, grade: eff[q.code].self!.evidence_grade, evidence: eff[q.code].self!.evidence_note } : null,
-      mentor: eff[q.code].mentor ? { score: eff[q.code].mentor!.score_final, grade: eff[q.code].mentor!.evidence_grade, evidence: eff[q.code].mentor!.evidence_note } : null,
+      self: eff[q.code].self ? { score: scoreOf(eff[q.code].self), grade: eff[q.code].self!.evidence_grade, evidence: eff[q.code].self!.evidence_note } : null,
+      mentor: eff[q.code].mentor ? { score: scoreOf(eff[q.code].mentor), grade: eff[q.code].mentor!.evidence_grade, evidence: eff[q.code].mentor!.evidence_note } : null,
     })),
     axis_scores: axisScores(b.assessments),
   };

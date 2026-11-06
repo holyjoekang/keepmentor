@@ -1,13 +1,21 @@
 import {
-  AXES, CORE_QUESTIONS, GRADE_CAP, RUNWAY_THRESHOLD_MONTHS, gradeOf, gatesFor,
+  AXES, CAP_EXEMPT, CORE_QUESTIONS, GRADE_CAP, RUNWAY_THRESHOLD_MONTHS, gradeOf, gatesFor,
   type AxisCode, type EvidenceGrade, type Stage,
 } from './methodology';
 import type { Assessment, Company, Engagement } from './schema';
 
 // 입력 점수와 증거 상한 중 낮은 값으로 확정 (12.3절)
-export function finalScore(scoreInput: number, evidenceType: string): { grade: EvidenceGrade; final: number } {
+// M0처럼 사실을 입력하는 문항은 상한을 걸지 않는다.
+export function finalScore(scoreInput: number, evidenceType: string, qCode?: string): { grade: EvidenceGrade; final: number } {
   const grade = gradeOf(evidenceType);
+  if (qCode && CAP_EXEMPT.has(qCode)) return { grade, final: scoreInput };
   return { grade, final: Math.min(scoreInput, GRADE_CAP[grade]) };
+}
+
+// 저장된 응답의 확정 점수 (예전에 상한이 걸려 저장된 면제 문항도 다시 계산한다)
+export function scoreOf(a: Assessment | undefined): number | undefined {
+  if (!a) return undefined;
+  return CAP_EXEMPT.has(a.q_code) ? Number(a.score_input) : Number(a.score_final);
 }
 
 // 문항별 유효 점수: 멘토 보정이 있으면 멘토 값을 우선
@@ -20,7 +28,7 @@ export function effectiveScores(assessments: Assessment[]): Record<string, { sel
   for (const q of CORE_QUESTIONS) {
     const self = latestRound('self', q.code);
     const mentor = latestRound('mentor', q.code);
-    out[q.code] = { self, mentor, final: mentor ? Number(mentor.score_final) : self ? Number(self.score_final) : undefined };
+    out[q.code] = { self, mentor, final: mentor ? scoreOf(mentor) : self ? scoreOf(self) : undefined };
   }
   return out;
 }
@@ -32,8 +40,8 @@ export function axisScores(assessments: Assessment[], rater?: 'self' | 'mentor')
     const vals = CORE_QUESTIONS.filter((q) => q.axis === ax.code)
       .map((q) => {
         const e = eff[q.code];
-        if (rater === 'self') return e.self ? Number(e.self.score_final) : undefined;
-        if (rater === 'mentor') return e.mentor ? Number(e.mentor.score_final) : undefined;
+        if (rater === 'self') return scoreOf(e.self);
+        if (rater === 'mentor') return scoreOf(e.mentor);
         return e.final;
       })
       .filter((v): v is number => typeof v === 'number' && !Number.isNaN(v));
