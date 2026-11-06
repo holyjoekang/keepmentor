@@ -27,7 +27,7 @@ export function TopBar({ me, variant = 'app' }: { me?: Me | null; variant?: 'app
     <div className={`topbar${dark ? ' dark' : ''}`}>
       <div className="row" style={{ gap: 18 }}>
         <Link href={me ? '/home' : '/'} className="brand"><Logo size={28} light={dark} /></Link>
-        <Link href="/method" className="navlink hide-sm">방법론</Link>
+        <Link href="/" className="navlink hide-sm">방법론</Link>
         <Link href="/cases" className="navlink hide-sm">사례</Link>
         {me && <Link href="/home" className="navlink">내 멘토링</Link>}
         {MODE === 'demo' && <span className="badge warn">데모</span>}

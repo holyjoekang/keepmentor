@@ -20,11 +20,12 @@ export function PubNav({ me }: { me?: Me | null }) {
         <div className="row" style={{ gap: 28 }}>
           <Link href="/" aria-label="Keep Mentor 홈"><Logo size={30} /></Link>
           <nav className="row hide-sm" style={{ gap: 22 }}>
-            <Link href="/method" className="nl">방법론</Link>
-            <Link href="/#approach" className="nl">진행 절차</Link>
+            <Link href="/" className="nl">방법론</Link>
+            <Link href="/#flow" className="nl">진행 절차</Link>
             <Link href="/cases" className="nl">사례</Link>
             <Link href="/solutions" className="nl">도입 안내</Link>
-            <Link href="/method#foundations" className="nl">근거</Link>
+            <Link href="/about" className="nl">소개</Link>
+            <Link href="/#foundations" className="nl">근거</Link>
           </nav>
         </div>
         <div className="row" style={{ gap: 14 }}>
@@ -47,10 +48,10 @@ export function PubFooter() {
           </div>
           <div>
             <h5>방법론</h5>
-            <Link href="/method#flow">진행 절차</Link>
-            <Link href="/method#diagnosis">진단 기준</Link>
-            <Link href="/method#stages">단계와 관문</Link>
-            <Link href="/method#kpi">성과 측정</Link>
+            <Link href="/#flow">진행 절차</Link>
+            <Link href="/#diagnosis">진단 기준</Link>
+            <Link href="/#stages">단계와 관문</Link>
+            <Link href="/#kpi">성과 측정</Link>
             <Link href="/cases">사례집</Link>
           </div>
           <div>
@@ -62,6 +63,7 @@ export function PubFooter() {
           </div>
           <div>
             <h5>이용</h5>
+            <Link href="/about">Keep Mentor 소개</Link>
             <Link href="/login">로그인</Link>
             <Link href="/guide">Claude 프로젝트 지침</Link>
           </div>

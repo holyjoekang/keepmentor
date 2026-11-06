@@ -125,7 +125,7 @@ export default function Solutions() {
             <div className="ed-kicker">Contact</div>
             <h2 className="ed-h2 serif" style={{ color: '#fff' }}>도입 문의</h2>
             <p className="ed-intro">기관 정보와 멘토링 규모를 알려 주시면 맞춤 도입안과 견적을 보내 드립니다.</p>
-            <Link href="/method" className="btn line-light">방법론 먼저 보기</Link>
+            <Link href="/" className="btn line-light">방법론 먼저 보기</Link>
           </div>
           <div className="card" style={{ margin: 0, color: 'var(--text)', borderRadius: 4 }}>
             {sent ? (

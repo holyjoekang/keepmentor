@@ -41,7 +41,7 @@ export default function LoginPage() {
             <div className="ed-kicker">Keep Mentor</div>
             <h1 className="serif" style={{ fontSize: 'clamp(30px, 4vw, 46px)', marginTop: 16 }}>진단 → 처방 → 실험 → 점검</h1>
             <p className="lead">사람이 먼저 쓰고 AI는 보완하는 스타트업 멘토링 기록. 멘토와 멘티가 같은 절차와 같은 결과물을 봅니다.</p>
-            <Link href="/method" className="btn line-light" style={{ marginTop: 12 }}>방법론 먼저 보기 <Icon name="arrow" size={15} /></Link>
+            <Link href="/" className="btn line-light" style={{ marginTop: 12 }}>방법론 먼저 보기 <Icon name="arrow" size={15} /></Link>
           </div>
           <div className="card" style={{ margin: 0, color: 'var(--text)' }}>
             <h2>로그인</h2>

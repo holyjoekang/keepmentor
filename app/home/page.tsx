@@ -52,7 +52,7 @@ export default function HomePage() {
             <p className="muted small" style={{ margin: 0 }}>같은 사람이 어떤 건에서는 멘토, 다른 건에서는 멘티가 될 수 있습니다.</p>
           </div>
           <div className="row">
-            <Link href="/method" className="btn"><Icon name="book" size={16} /> 방법론</Link>
+            <Link href="/" className="btn"><Icon name="book" size={16} /> 방법론</Link>
             <button className="primary" onClick={() => setShowNew((v) => !v)}><Icon name="layers" size={16} /> 새 멘토링 건</button>
           </div>
         </div>

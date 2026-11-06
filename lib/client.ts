@@ -29,8 +29,11 @@ export async function currentUser(): Promise<Me | null> {
     const u = demoUser();
     return u ? { email: u.email, name: u.name, is_admin: !!u.is_admin } : null;
   }
+  // 로그인 여부만 확인한다. 비로그인이어도 /login 으로 보내지 않는다 (공개 페이지에서 쓰기 때문).
   try {
-    return (await call('me')) as Me;
+    const res = await fetch('/api/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'me', args: [] }) });
+    const data = await res.json();
+    return data.ok ? (data.result as Me) : null;
   } catch {
     return null;
   }

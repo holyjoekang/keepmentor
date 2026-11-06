@@ -151,7 +151,7 @@ export default function CaseDetail() {
                     <strong>Keep Mentor에서는 이렇게 이어집니다</strong>
                     <p className="small muted" style={{ margin: '4px 0 0' }}>근본 원인은 진단 리포트의 병목으로, 2주 과제는 실험 카드로, 성공 신호는 증거등급 상승으로 기록합니다.</p>
                   </div>
-                  <Link href="/method#exp" className="btn">실험 카드 보기</Link>
+                  <Link href="/#exp" className="btn">실험 카드 보기</Link>
                 </div>
               </div>
 
