@@ -123,9 +123,9 @@ function Header({ b }: { b: Bundle }) {
       <div className="hero-band">
         <div className="row between" style={{ alignItems: 'flex-start' }}>
           <div className="row" style={{ gap: 14 }}>
-            <span className="ichip lg" style={{ background: 'rgba(255,255,255,0.14)', color: '#fff', fontWeight: 800, fontSize: 18 }}>{b.company.name.slice(0, 1)}</span>
+            <span className="ichip lg" style={{ background: '#23306B', color: '#fff', fontWeight: 800, fontSize: 18 }}>{b.company.name.slice(0, 1)}</span>
             <div>
-              <h1 style={{ margin: 0, color: '#fff' }}>{b.company.name}</h1>
+              <h1 style={{ margin: 0 }}>{b.company.name}</h1>
               <div className="small muted">{b.company.summary || '한 줄 소개를 기업·이슈 탭에서 입력하세요'}</div>
             </div>
           </div>
@@ -137,8 +137,8 @@ function Header({ b }: { b: Bundle }) {
         </div>
         <div className="grid grid-2" style={{ marginTop: 18, gap: 24, alignItems: 'end' }}>
           <div>
-            <div className="small muted" style={{ marginBottom: 6 }}>성장 단계 <strong style={{ color: '#fff' }}>{e.stage} {stage?.name}</strong> — {stage?.question}</div>
-            <div style={{ filter: 'brightness(1.4)' }}><StageBar stage={e.stage} /></div>
+            <div className="small muted" style={{ marginBottom: 6 }}>성장 단계 <strong style={{ color: 'var(--text)' }}>{e.stage} {stage?.name}</strong> — {stage?.question}</div>
+            <StageBar stage={e.stage} />
           </div>
           <div className="small muted" style={{ textAlign: 'right' }}>멘토 {received ? e.mentor_name : e.mentor_email} · 시작 {e.start_date}</div>
         </div>
