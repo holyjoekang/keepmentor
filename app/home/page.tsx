@@ -90,7 +90,7 @@ export default function HomePage() {
                     <span className="ichip lg" style={{ background: 'var(--navy)', color: '#fff', fontWeight: 800 }}>{it.company.slice(0, 1)}</span>
                     <div>
                       <h2 style={{ margin: 0 }}>{it.company}</h2>
-                      <div className="muted small">{it.program ?? '프로그램 미지정'} · {INDUSTRY_TEMPLATES.find((t) => t.code === it.industry)?.name ?? '업종 미정'}</div>
+                      <div className="muted small">{it.kind === 'received' ? `받는 멘토링 · 멘토 ${it.mentor_name ?? ''}` : (it.program ?? '프로그램 미지정')} · {INDUSTRY_TEMPLATES.find((t) => t.code === it.industry)?.name ?? '업종 미정'}</div>
                     </div>
                   </div>
                   {it.red_flags > 0 ? <span className="badge danger"><Icon name="flag" size={12} /> {it.red_flags}</span> : <span className="badge accent">{it.status}</span>}
@@ -119,13 +119,18 @@ export default function HomePage() {
 
 function NewEngagement({ me, onDone }: { me: { email: string; is_admin: boolean }; onDone: () => void }) {
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [f, setF] = useState({ program_id: '', company_name: '', industry: 'saas', mentor_email: me.email, mentee_email: '' });
+  const [f, setF] = useState({ program_id: '', company_name: '', industry: 'saas', mentor_email: me.email, mentee_email: '', kind: 'given' as 'given' | 'received', mentor_name: '' });
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { call('programs').then(setPrograms).catch(() => undefined); }, []);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <div className="card">
       <div className="card-title"><span className="ichip"><Icon name="layers" /></span><h2>새 멘토링 건</h2></div>
+      <div className="row" style={{ gap: 8, marginBottom: 6 }}>
+        <button className={f.kind === 'given' ? 'primary' : ''} onClick={() => setF({ ...f, kind: 'given', mentor_email: me.email })}>내가 멘토인 멘토링</button>
+        <button className={f.kind === 'received' ? 'primary' : ''} onClick={() => setF({ ...f, kind: 'received', mentor_email: '' })}>내가 받는 멘토링 (외부 멘토)</button>
+      </div>
+      {f.kind === 'received' && <p className="small muted">외부 멘토에게 받는 멘토링을 대표님이 직접 기록합니다. 멘토가 앱 계정이 없어도 됩니다.</p>}
       <div className="grid grid-2">
         <div>
           <label>프로그램</label>
@@ -141,10 +146,21 @@ function NewEngagement({ me, onDone }: { me: { email: string; is_admin: boolean 
           </select>
         </div>
         <div>
-          <label>멘토 이메일</label>
-          <input value={f.mentor_email} onChange={set('mentor_email')} disabled={!me.is_admin} />
-          <label>멘티(대표) 이메일</label>
-          <input value={f.mentee_email} onChange={set('mentee_email')} placeholder="ceo@company.com" />
+          {f.kind === 'received' ? (
+            <>
+              <label>멘토 이름</label>
+              <input value={f.mentor_name} onChange={set('mentor_name')} placeholder="예: 이광일 멘토" />
+              <label>멘토 이메일 (선택 · 앱 계정이 있을 때만)</label>
+              <input value={f.mentor_email} onChange={set('mentor_email')} />
+            </>
+          ) : (
+            <>
+              <label>멘토 이메일</label>
+              <input value={f.mentor_email} onChange={set('mentor_email')} disabled={!me.is_admin} />
+              <label>멘티(대표) 이메일</label>
+              <input value={f.mentee_email} onChange={set('mentee_email')} placeholder="ceo@company.com" />
+            </>
+          )}
         </div>
       </div>
       <ErrorBox error={error} />

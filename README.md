@@ -99,7 +99,7 @@ gas/Code.gs         Google Apps Script 저장소
 
 ## 사례집 데이터
 
-`public/data/cases.json`은 Joyhouse 스타트업 멘토링(`holyjoekang/joyhouse`의 `data/mentoring/mentoring.json`)에서 만듭니다. 원본이 바뀌면 다시 실행합니다.
+`data/cases.json`(서버 전용, 로그인 또는 `CASES_CODE` 열람 코드로만 공개)은 Joyhouse 스타트업 멘토링(`holyjoekang/joyhouse`의 `data/mentoring/mentoring.json`)에서 만듭니다. 원본이 바뀌면 다시 실행합니다.
 
 ```bash
 python3 scripts/import_joyhouse_cases.py /path/to/joyhouse

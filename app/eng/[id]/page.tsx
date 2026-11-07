@@ -114,7 +114,8 @@ function Header({ b }: { b: Bundle }) {
     { icon: 'pen', label: '멘티 확인한 회차', value: `${acked} / ${b.sessions.length}`, cls: 'warn' },
     { icon: 'flag', label: '레드플래그', value: String(flags.length), cls: flags.length ? 'danger' : '' },
   ];
-  const roleLabel = b.role === 'mentor' ? '멘토' : b.role === 'mentee' ? '멘티' : '기관';
+  const received = e.kind === 'received';
+  const roleLabel = received ? '멘티 · 직접 기록' : b.role === 'mentor' ? '멘토' : b.role === 'mentee' ? '멘티' : '기관';
 
   return (
     <>
@@ -139,7 +140,7 @@ function Header({ b }: { b: Bundle }) {
             <div className="small muted" style={{ marginBottom: 6 }}>성장 단계 <strong style={{ color: '#fff' }}>{e.stage} {stage?.name}</strong> — {stage?.question}</div>
             <div style={{ filter: 'brightness(1.4)' }}><StageBar stage={e.stage} /></div>
           </div>
-          <div className="small muted" style={{ textAlign: 'right' }}>멘토 {e.mentor_email} · 시작 {e.start_date}</div>
+          <div className="small muted" style={{ textAlign: 'right' }}>멘토 {received ? e.mentor_name : e.mentor_email} · 시작 {e.start_date}</div>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ export const SHEETS = {
     'goals', 'bottlenecks', 'mentor_own_bottleneck', 'ai_briefing', 'briefing_choice_reason',
     'mentor_biggest_change', 'mentee_biggest_change', 'final_report',
     'start_date', 'created_at', 'updated_at',
+    'kind', 'mentor_name', 'recorder_email',
   ],
   Assessments: [
     'id', 'eng_id', 'round', 'rater', 'q_code', 'score_input', 'evidence_type', 'evidence_note',
@@ -27,6 +28,7 @@ export const SHEETS = {
     'advice_3lines', 'decisions', 'mentor_confidence', 'next_date', 'private_note',
     'content_origin', 'mentee_own_summary', 'mentee_own_tasks', 'mentee_ack', 'mentee_comment', 'mentee_rating',
     'created_at', 'updated_at',
+    'meeting_notes', 'notes_source', 'action_items',
   ],
   Experiments: [
     'id', 'eng_id', 'session_id', 'hypothesis', 'method', 'success_metric', 'target_value', 'due_date',
@@ -37,6 +39,10 @@ export const SHEETS = {
     'status', 'result_json', 'reject_reason', 'imported_at', 'confirmed_by',
   ],
   PanelRuns: ['id', 'job_id', 'eng_id', 'result_json', 'mentor_decision', 'created_at'],
+  MentorMeetings: [
+    'id', 'owner_email', 'date', 'title', 'participants', 'share_emails', 'tags', 'summary', 'next_steps', 'details',
+    'my_takeaways', 'notes_source', 'created_at', 'updated_at',
+  ],
   AuditLog: ['id', 'ts', 'user_email', 'action', 'sheet', 'row_id', 'detail'],
 } as const;
 
@@ -63,6 +69,8 @@ export interface Engagement extends Row {
   mentor_own_bottleneck?: string; ai_briefing?: Record<string, unknown> | null; briefing_choice_reason?: string;
   mentor_biggest_change?: string; mentee_biggest_change?: string; final_report?: Record<string, unknown> | null;
   start_date?: string; created_at?: string; updated_at?: string;
+  // kind 'received': 외부 멘토에게 받는 멘토링. recorder(멘티 본인)가 직접 기록한다.
+  kind?: 'given' | 'received'; mentor_name?: string; recorder_email?: string;
 }
 export interface Assessment extends Row {
   eng_id: string; round: number; rater: 'self' | 'mentor'; q_code: string; score_input: number;
@@ -75,6 +83,7 @@ export interface Session extends Row {
   advice_3lines?: string; decisions?: string; mentor_confidence?: number; next_date?: string; private_note?: string;
   content_origin?: string; mentee_own_summary?: string; mentee_own_tasks?: string; mentee_ack?: boolean;
   mentee_comment?: string; mentee_rating?: number; created_at?: string; updated_at?: string;
+  meeting_notes?: string; notes_source?: string; action_items?: string[];
 }
 export interface Experiment extends Row {
   eng_id: string; session_id?: string; hypothesis: string; method?: string; success_metric?: string;
@@ -88,6 +97,12 @@ export interface AIJob extends Row {
 }
 export interface PanelRun extends Row {
   job_id: string; eng_id: string; result_json: Record<string, unknown>; mentor_decision?: string; created_at: string;
+}
+
+export interface MentorMeeting extends Row {
+  owner_email: string; date: string; title: string; participants?: string; share_emails?: string[]; tags?: string[];
+  summary?: string; next_steps?: string[]; details?: string[]; my_takeaways?: string; notes_source?: string;
+  created_at?: string; updated_at?: string;
 }
 
 export interface Bundle {

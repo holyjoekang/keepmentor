@@ -30,7 +30,15 @@ export function gasStore(url: string, secret: string): Store {
   }
   return {
     async list<T extends Row>(sheet: SheetName) {
-      if (!cache.has(sheet)) cache.set(sheet, (await call({ op: 'list', sheet })) as Row[]);
+      if (!cache.has(sheet)) {
+        try {
+          cache.set(sheet, (await call({ op: 'list', sheet })) as Row[]);
+        } catch (e) {
+          // 새로 추가된 시트가 아직 없으면 빈 목록으로 본다 (/setup 을 다시 실행하면 만들어진다)
+          if (String((e as Error).message).includes('시트 없음')) cache.set(sheet, []);
+          else throw e;
+        }
+      }
       return cache.get(sheet) as T[];
     },
     async insert<T extends Row>(sheet: SheetName, row: T) {

@@ -66,7 +66,7 @@ function Brief({ b }: { b: Bundle }) {
         </div>
         <div className="small muted" style={{ textAlign: 'right' }}>
           {b.program ? `${b.program.org_name} · ${b.program.name}` : ''}<br />
-          멘토 {b.engagement.mentor_email} · 작성일 {today}
+          멘토 {b.engagement.kind === 'received' ? b.engagement.mentor_name : b.engagement.mentor_email} · 작성일 {today}
         </div>
       </header>
 

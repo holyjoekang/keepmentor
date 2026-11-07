@@ -2,7 +2,7 @@
 
     python scripts/import_joyhouse_cases.py [joyhouse 경로]
 
-출력: public/data/cases.json  (/cases 페이지가 읽는다)
+출력: data/cases.json  (/api/cases 가 인증 후 내려준다)
 미팅 기록(meetings.json)은 실명 대화 기록이라 옮기지 않는다.
 """
 import json
@@ -76,6 +76,6 @@ out = {
                "oneLiner": site.get("oneLiner", "")},
     "stages": stages, "tracks": tracks, "cases": cases,
 }
-dst = ROOT / "public/data/cases.json"
+dst = ROOT / "data/cases.json"
 dst.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 print(f"cases {len(cases)} · stages {len(stages)} · tracks {len(tracks)} · {dst.stat().st_size // 1024} KB")

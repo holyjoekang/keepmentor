@@ -7,7 +7,7 @@ import { finalScore } from './scoring';
 import {
   newId, nowIso,
   type AIJob, type Assessment, type Bundle, type Company, type Engagement, type Experiment,
-  type PanelRun, type Program, type Session, type User,
+  type MentorMeeting, type PanelRun, type Program, type Session, type User,
 } from './schema';
 import type { Store } from './store';
 
@@ -23,6 +23,7 @@ export interface HomeItem {
   eng_id: string; company: string; stage?: string; status: string; program?: string;
   next_date?: string; open_experiments: number; red_flags: number; mentor_email: string; mentee_emails: string[];
   sessions_done: number; session_total: number; pending_acks: number; industry?: string;
+  kind?: string; mentor_name?: string;
 }
 
 export function createActions(store: Store, me: User) {
@@ -33,7 +34,11 @@ export function createActions(store: Store, me: User) {
     await store.insert('AuditLog', { id: newId('LOG'), ts: nowIso(), user_email: email, action, sheet, row_id: rowId, detail });
   }
 
+  // 받는 멘토링(kind 'received')의 기록자는 기록 권한을 가진다(멘토 권한과 같다).
+  const isRecorder = (e: Engagement) => e.kind === 'received' && (e.recorder_email ?? '').toLowerCase() === email;
+
   function roleIn(e: Engagement): 'mentor' | 'mentee' | 'admin' | null {
+    if (isRecorder(e)) return 'mentor';
     if (e.mentor_email?.toLowerCase() === email) return 'mentor';
     if ((e.mentee_emails ?? []).map((x) => x.toLowerCase()).includes(email)) return 'mentee';
     if (isAdmin) return 'admin';
@@ -100,12 +105,14 @@ export function createActions(store: Store, me: User) {
           industry: companies.find((c) => c.id === e.company_id)?.industry,
           red_flags: (e.red_flags ?? []).length,
           mentor_email: e.mentor_email, mentee_emails: e.mentee_emails ?? [],
+          kind: e.kind ?? 'given', mentor_name: e.mentor_name,
         };
       };
       const asMentor: HomeItem[] = [], asMentee: HomeItem[] = [], asAdmin: HomeItem[] = [];
       for (const e of engs) {
         const r = roleIn(e);
-        if (r === 'mentor') asMentor.push(item(e));
+        if (isRecorder(e)) asMentee.push(item(e));
+        else if (r === 'mentor') asMentor.push(item(e));
         else if (r === 'mentee') asMentee.push(item(e));
         else if (r === 'admin') asAdmin.push(item(e));
       }
@@ -114,8 +121,25 @@ export function createActions(store: Store, me: User) {
 
     bundle,
 
-    async createEngagement(p: { program_id?: string; company_name: string; industry?: string; mentor_email: string; mentee_email: string }) {
-      req(p.company_name, '기업명'); req(p.mentor_email, '멘토 이메일'); req(p.mentee_email, '멘티 이메일');
+    async createEngagement(p: { program_id?: string; company_name: string; industry?: string; mentor_email: string; mentee_email: string; kind?: 'given' | 'received'; mentor_name?: string }) {
+      req(p.company_name, '기업명');
+      if (p.kind === 'received') {
+        // 외부 멘토에게 받는 멘토링: 멘티가 본인, 기록자도 본인
+        req(p.mentor_name, '멘토 이름');
+        const company: Company = { id: newId('COM'), name: p.company_name.trim(), industry: p.industry || 'saas', consent_ai: true, updated_at: nowIso() };
+        await store.insert('Companies', company);
+        const e: Engagement = {
+          id: newId('ENG'), program_id: p.program_id, company_id: company.id,
+          mentor_email: (p.mentor_email ?? '').trim().toLowerCase(), mentee_emails: [email],
+          kind: 'received', mentor_name: String(p.mentor_name).trim(), recorder_email: email,
+          status: '진행', stage: 'S0', gates: {}, red_flags: [], issue_codes: [], goals: [], bottlenecks: [],
+          start_date: nowIso().slice(0, 10), created_at: nowIso(), updated_at: nowIso(),
+        };
+        await store.insert('Engagements', e);
+        await audit('create', 'Engagements', e.id, 'received');
+        return e;
+      }
+      req(p.mentor_email, '멘토 이메일'); req(p.mentee_email, '멘티 이메일');
       if (!isAdmin && p.mentor_email.toLowerCase() !== email) fail('본인이 멘토인 건만 만들 수 있습니다.');
       const company: Company = { id: newId('COM'), name: p.company_name.trim(), industry: p.industry || 'saas', consent_ai: true, updated_at: nowIso() };
       await store.insert('Companies', company);
@@ -194,11 +218,15 @@ export function createActions(store: Store, me: User) {
       }
       req(s.date, '일시');
       const all = (await store.list<Session>('Sessions')).filter((x) => x.eng_id === engId);
+      const roundNo = Number(s.round_no) > 0 ? Number(s.round_no) : all.reduce((m, x) => Math.max(m, Number(x.round_no) || 0), 0) + 1;
+      if (all.some((x) => Number(x.round_no) === roundNo)) fail(`${roundNo}차 기록이 이미 있습니다.`);
+      const origin = s.content_origin === 'ai_raw' ? 'ai_raw' : 'human';
       const row: Session = {
-        id: newId('SES'), eng_id: engId, round_no: all.length + 1, date: String(s.date),
+        id: newId('SES'), eng_id: engId, round_no: roundNo, date: String(s.date),
         issue_codes: s.issue_codes ?? [], mentor_own_summary: s.mentor_own_summary ?? '', mentor_next_check: s.mentor_next_check ?? '',
         advice_3lines: s.advice_3lines ?? '', decisions: s.decisions ?? '', mentor_confidence: s.mentor_confidence ?? 3,
-        next_date: s.next_date ?? '', private_note: s.private_note ?? '', content_origin: 'human', mentee_ack: false,
+        next_date: s.next_date ?? '', private_note: s.private_note ?? '', content_origin: origin, mentee_ack: false,
+        meeting_notes: s.meeting_notes ?? '', notes_source: s.notes_source ?? '', action_items: s.action_items ?? [],
         created_at: nowIso(), updated_at: nowIso(),
       };
       await store.insert('Sessions', row);
@@ -209,7 +237,8 @@ export function createActions(store: Store, me: User) {
     async ackSession(sessionId: string, p: { mentee_own_summary: string; mentee_own_tasks: string; mentee_comment?: string; mentee_rating?: number }) {
       const s = (await store.list<Session>('Sessions')).find((x) => x.id === sessionId);
       if (!s) fail('회차를 찾을 수 없습니다.');
-      await loadEng(s!.eng_id, ['mentee']);
+      const { e: eng, role: ackRole } = await loadEng(s!.eng_id, ['mentee', 'mentor']);
+      if (ackRole !== 'mentee' && !isRecorder(eng)) fail('멘티만 확인할 수 있습니다.');
       // 사람 점검 지점: 멘티가 이해한 내용을 직접 쓴다
       req(p.mentee_own_summary, '내가 이해한 핵심 3줄');
       req(p.mentee_own_tasks, '이번 2주에 내가 할 일');
@@ -327,6 +356,34 @@ export function createActions(store: Store, me: User) {
       await store.update<AIJob>('AIJobs', jobId, { status: 'imported', result_json: data, imported_at: nowIso(), confirmed_by: email });
       await audit('import', 'AIJobs', jobId, type);
       return true;
+    },
+
+    // ---- 멘토 회의 (멘토끼리의 회의 기록) ----
+    async meetings() {
+      const all = await store.list<MentorMeeting>('MentorMeetings');
+      return all
+        .filter((m) => m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email) || isAdmin)
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    },
+    async saveMeeting(m: Partial<MentorMeeting>) {
+      req(m.title, '회의 제목'); req(m.date, '일시');
+      const share = (m.share_emails ?? []).map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+      if (m.id) {
+        const prev = (await store.list<MentorMeeting>('MentorMeetings')).find((x) => x.id === m.id);
+        if (!prev) fail('회의 기록을 찾을 수 없습니다.');
+        if (prev!.owner_email?.toLowerCase() !== email && !isAdmin) fail('작성자만 고칠 수 있습니다.');
+        const { id, owner_email: _o, created_at: _c, ...rest } = m;
+        void _o; void _c;
+        return store.update<MentorMeeting>('MentorMeetings', id!, { ...rest, share_emails: share, updated_at: nowIso() });
+      }
+      const row: MentorMeeting = {
+        id: newId('MTG'), owner_email: email, date: String(m.date), title: String(m.title), participants: m.participants ?? '',
+        share_emails: share, tags: m.tags ?? [], summary: m.summary ?? '', next_steps: m.next_steps ?? [], details: m.details ?? [],
+        my_takeaways: m.my_takeaways ?? '', notes_source: m.notes_source ?? '', created_at: nowIso(), updated_at: nowIso(),
+      };
+      await store.insert('MentorMeetings', row);
+      await audit('create', 'MentorMeetings', row.id);
+      return row;
     },
 
     // ---- 관리 ----

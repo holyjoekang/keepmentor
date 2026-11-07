@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Icon } from '@/components/icons';
 import { PubFooter, PubNav, useOptionalMe } from '@/components/Public';
+import { CasesLock } from '@/components/CasesLock';
 import { stageName, trackName, useCases } from '@/lib/cases';
 
 const GROW = [
@@ -16,7 +17,7 @@ const GROW = [
 export default function CaseDetail() {
   const { id } = useParams<{ id: string }>();
   const me = useOptionalMe();
-  const { data, error } = useCases();
+  const { data, error, locked, reload } = useCases();
   const cid = decodeURIComponent(id);
   const idx = data?.cases.findIndex((c) => c.id === cid) ?? -1;
   const c = data && idx >= 0 ? data.cases[idx] : null;
@@ -27,6 +28,7 @@ export default function CaseDetail() {
   return (
     <div className="pub">
       <PubNav me={me} />
+      {locked && <CasesLock codeEnabled={locked.codeEnabled} onUnlocked={reload} />}
       {error && <div className="pw"><div className="alert error">{error}</div></div>}
       {data && !c && <div className="pw" style={{ padding: 48 }}><div className="card">사례를 찾을 수 없습니다. <Link href="/cases">사례집으로</Link></div></div>}
       {data && c && (

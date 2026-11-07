@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { PubFooter, PubNav, useOptionalMe } from '@/components/Public';
+import { CasesLock } from '@/components/CasesLock';
 import { stageName, trackName, useCases, type CaseTrack } from '@/lib/cases';
 
 export default function CasesPage() {
   const me = useOptionalMe();
-  const { data, error } = useCases();
+  const { data, error, locked, reload } = useCases();
   const [stage, setStage] = useState<string>('all');
   const [track, setTrack] = useState<string>('all');
   const [cat, setCat] = useState<string>('all');
@@ -49,7 +50,8 @@ export default function CasesPage() {
         </div>
       </section>
 
-      <section className="ed-sec" style={{ paddingTop: 48 }}>
+      {locked && <CasesLock codeEnabled={locked.codeEnabled} onUnlocked={reload} />}
+      {!locked && <section className="ed-sec" style={{ paddingTop: 48 }}>
         <div className="pw">
           <div className="alert info" style={{ marginBottom: 28 }}>
             <Icon name="shield" size={18} />
@@ -122,7 +124,7 @@ export default function CasesPage() {
             </>
           )}
         </div>
-      </section>
+      </section>}
 
       {data && data.tracks.map((t) => <TrackSection key={t.code} t={t} />)}
       <PubFooter />
