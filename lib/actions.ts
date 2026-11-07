@@ -53,6 +53,11 @@ export function createActions(store: Store, me: User) {
     return { e: e!, role: role! };
   }
 
+  async function visibleMeetings() {
+    const all = await store.list<MentorMeeting>('MentorMeetings');
+    return all.filter((m) => m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email) || isAdmin);
+  }
+
   async function bundle(engId: string): Promise<Bundle> {
     const { e, role } = await loadEng(engId, ['mentor', 'mentee', 'admin']);
     const [companies, programs, assessments, sessions, experiments, jobs, panels] = await Promise.all([
@@ -360,14 +365,34 @@ export function createActions(store: Store, me: User) {
 
     // ---- 멘토 회의 (멘토끼리의 회의 기록) ----
     async meetings() {
-      const all = await store.list<MentorMeeting>('MentorMeetings');
-      return all
-        .filter((m) => m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email) || isAdmin)
+      return (await visibleMeetings()).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    },
+    // 연결할 수 있는 멘토링 건 (내가 접근할 수 있는 건)
+    async linkableEngagements() {
+      const [engs, companies] = await Promise.all([store.list<Engagement>('Engagements'), store.list<Company>('Companies')]);
+      return engs.filter((e) => roleIn(e)).map((e) => ({
+        id: e.id, company_id: e.company_id, company: companies.find((c) => c.id === e.company_id)?.name ?? '(기업 미상)',
+        kind: e.kind ?? 'given', mentor_name: e.mentor_name ?? '', role: isRecorder(e) ? 'mentee' : roleIn(e),
+        can_record: roleIn(e) === 'mentor',
+      }));
+    },
+    // 멘토링 건에 연결된 멘토 회의: 이 건 또는 같은 기업의 다른 건에 연결된 것 중 내가 볼 수 있는 것
+    async meetingsForEng(engId: string) {
+      const { e } = await loadEng(engId, ['mentor', 'mentee', 'admin']);
+      const engs = await store.list<Engagement>('Engagements');
+      const sameCompany = new Set(engs.filter((x) => x.company_id === e.company_id).map((x) => x.id));
+      return (await visibleMeetings())
+        .filter((m) => (m.linked_eng_ids ?? []).some((id) => sameCompany.has(id)))
+        .map((m) => ({ ...m, direct: (m.linked_eng_ids ?? []).includes(engId) }))
         .sort((a, b) => String(b.date).localeCompare(String(a.date)));
     },
     async saveMeeting(m: Partial<MentorMeeting>) {
       req(m.title, '회의 제목'); req(m.date, '일시');
       const share = (m.share_emails ?? []).map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+      // 내가 접근할 수 있는 건만 연결한다
+      const engs = await store.list<Engagement>('Engagements');
+      const linked = Array.from(new Set((m.linked_eng_ids ?? []).filter((id) => { const e = engs.find((x) => x.id === id); return !!e && !!roleIn(e); })));
+      m = { ...m, linked_eng_ids: linked };
       if (m.id) {
         const prev = (await store.list<MentorMeeting>('MentorMeetings')).find((x) => x.id === m.id);
         if (!prev) fail('회의 기록을 찾을 수 없습니다.');
@@ -379,7 +404,8 @@ export function createActions(store: Store, me: User) {
       const row: MentorMeeting = {
         id: newId('MTG'), owner_email: email, date: String(m.date), title: String(m.title), participants: m.participants ?? '',
         share_emails: share, tags: m.tags ?? [], summary: m.summary ?? '', next_steps: m.next_steps ?? [], details: m.details ?? [],
-        my_takeaways: m.my_takeaways ?? '', notes_source: m.notes_source ?? '', created_at: nowIso(), updated_at: nowIso(),
+        my_takeaways: m.my_takeaways ?? '', notes_source: m.notes_source ?? '', linked_eng_ids: linked,
+        created_at: nowIso(), updated_at: nowIso(),
       };
       await store.insert('MentorMeetings', row);
       await audit('create', 'MentorMeetings', row.id);

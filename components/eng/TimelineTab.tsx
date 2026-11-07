@@ -1,11 +1,13 @@
 'use client';
 
 import { Icon } from '@/components/icons';
+import { useRelatedMeetings } from './RelatedMeetings';
 import type { TabProps } from './types';
 
 // 사고 흐름: 사람이 쓴 내용만 시간 순으로 모아 본다 (설계서 8.4절)
 export function TimelineTab({ b }: TabProps) {
   const e = b.engagement;
+  const meetings = useRelatedMeetings(e.id) ?? [];
   const items: { date: string; who: string; title: string; text: string }[] = [];
   const c = b.company;
   if (c.issue_symptom) items.push({ date: String(e.start_date ?? ''), who: '멘티', title: '요청 이슈', text: `현상: ${c.issue_symptom}\n시도: ${c.issue_tried ?? ''}\n원하는 결과: ${c.issue_wanted ?? ''}` });
@@ -21,6 +23,7 @@ export function TimelineTab({ b }: TabProps) {
   for (const p of b.panels) if (p.mentor_decision) items.push({ date: String(p.created_at).slice(0, 10), who: '멘토', title: '전문가 패널에 대한 결정', text: p.mentor_decision });
   if (e.mentor_biggest_change) items.push({ date: String(e.updated_at ?? '').slice(0, 10), who: '멘토', title: '가장 크게 바뀐 점', text: e.mentor_biggest_change });
   if (e.mentee_biggest_change) items.push({ date: String(e.updated_at ?? '').slice(0, 10), who: '멘티', title: '가장 크게 바뀐 점', text: e.mentee_biggest_change });
+  for (const m of meetings) if (m.my_takeaways) items.push({ date: String(m.date), who: '멘토 회의', title: `멘토 회의 — ${m.title}`, text: m.my_takeaways });
   items.sort((a, b2) => a.date.localeCompare(b2.date));
 
   return (

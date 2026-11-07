@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { ErrorBox, Status, TopBar, useAsync, useMe } from '@/components/ui';
@@ -7,7 +8,10 @@ import { call } from '@/lib/client';
 import { parseMeetingNotes } from '@/lib/notes';
 import type { MentorMeeting } from '@/lib/schema';
 
-const blank = (): Partial<MentorMeeting> => ({ date: new Date().toISOString().slice(0, 10), title: '', participants: '', share_emails: [], tags: [], summary: '', next_steps: [], details: [], my_takeaways: '', notes_source: '' });
+const blank = (): Partial<MentorMeeting> => ({ date: new Date().toISOString().slice(0, 10), title: '', participants: '', share_emails: [], tags: [], summary: '', next_steps: [], details: [], my_takeaways: '', notes_source: '', linked_eng_ids: [] });
+
+interface LinkEng { id: string; company_id: string; company: string; kind: string; mentor_name: string; role: string | null; can_record: boolean }
+const engLabel = (e: LinkEng) => `${e.company} · ${e.kind === 'received' ? `받는 멘토링(${e.mentor_name})` : e.role === 'mentor' ? '내가 멘토' : e.role === 'mentee' ? '내가 멘티' : '기관'}`;
 
 export default function MeetingsPage() {
   const me = useMe();
@@ -16,15 +20,22 @@ export default function MeetingsPage() {
   const [edit, setEdit] = useState<Partial<MentorMeeting> | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [q, setQ] = useState('');
+  const [engs, setEngs] = useState<LinkEng[]>([]);
+  const [filter, setFilter] = useState('');
 
   async function load() {
-    try { setList(await call('meetings')); } catch (e) { setError((e as Error).message); }
+    try {
+      const [ms, es] = await Promise.all([call('meetings'), call('linkableEngagements')]);
+      setList(ms); setEngs(es as LinkEng[]);
+    } catch (e) { setError((e as Error).message); }
   }
+  useEffect(() => { const f = new URLSearchParams(window.location.search).get('eng'); if (f) setFilter(f); }, []);
   useEffect(() => { if (me) load(); }, [me]);
   if (!me) return <TopBar />;
 
   const k = q.trim().toLowerCase();
-  const shown = (list ?? []).filter((m) => !k || [m.title, m.participants, m.summary, (m.tags ?? []).join(' ')].join(' ').toLowerCase().includes(k));
+  const shown = (list ?? []).filter((m) => (!k || [m.title, m.participants, m.summary, (m.tags ?? []).join(' ')].join(' ').toLowerCase().includes(k))
+    && (!filter || (filter === 'none' ? !(m.linked_eng_ids ?? []).length : (m.linked_eng_ids ?? []).includes(filter))));
 
   return (
     <>
@@ -39,8 +50,15 @@ export default function MeetingsPage() {
           <button className="primary" onClick={() => setEdit(blank())}><Icon name="users" size={16} /> 새 회의 기록</button>
         </div>
         <ErrorBox error={error} />
-        {edit && <MeetingForm m={edit} onDone={async () => { setEdit(null); await load(); }} onCancel={() => setEdit(null)} />}
-        <input placeholder="검색: 제목, 참석자, 태그" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 360, margin: '16px 0' }} />
+        {edit && <MeetingForm m={edit} engs={engs} onDone={async () => { setEdit(null); await load(); }} onCancel={() => setEdit(null)} />}
+        <div className="row" style={{ margin: '16px 0', gap: 10 }}>
+          <input placeholder="검색: 제목, 참석자, 태그" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 320 }} />
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ width: 'auto' }}>
+            <option value="">모든 회의</option>
+            <option value="none">연결 안 된 회의</option>
+            {engs.map((e) => <option key={e.id} value={e.id}>{engLabel(e)}</option>)}
+          </select>
+        </div>
         {list && !shown.length && <div className="card muted">아직 회의 기록이 없습니다.</div>}
         {shown.map((m) => (
           <div key={m.id} className="card">
@@ -48,7 +66,10 @@ export default function MeetingsPage() {
               <div>
                 <div className="xsmall muted">{m.date} · {m.participants}</div>
                 <h2 style={{ margin: '2px 0 6px' }}>{m.title}</h2>
-                <div className="row" style={{ gap: 4 }}>{(m.tags ?? []).map((t) => <span key={t} className="badge">{t}</span>)}</div>
+                <div className="row" style={{ gap: 4 }}>
+                  {(m.linked_eng_ids ?? []).map((id) => { const e = engs.find((x) => x.id === id); return e ? <Link key={id} href={`/eng/${id}#sessions`} className="badge accent"><Icon name="layers" size={12} /> {e.company}</Link> : null; })}
+                  {(m.tags ?? []).map((t) => <span key={t} className="badge">{t}</span>)}
+                </div>
               </div>
               <div className="row">
                 {m.owner_email?.toLowerCase() === me.email.toLowerCase() && <button onClick={() => setEdit(m)}>수정</button>}
@@ -62,7 +83,7 @@ export default function MeetingsPage() {
                   <div className="panel-label" style={{ color: 'var(--green)' }}><Icon name="pen" size={14} /> 내가 얻은 것 · 적용할 것</div>
                   <div className="small" style={{ whiteSpace: 'pre-wrap' }}>{m.my_takeaways || '(아직 작성하지 않았습니다)'}</div>
                 </div>
-                {!!m.next_steps?.length && <><div className="small" style={{ fontWeight: 700 }}>다음 단계</div><ul className="small">{m.next_steps.map((x) => <li key={x}>{x}</li>)}</ul></>}
+                {!!m.next_steps?.length && <NextSteps m={m} engs={engs.filter((e) => e.can_record && (m.linked_eng_ids ?? []).includes(e.id))} />}
                 {!!m.details?.length && <details><summary className="small" style={{ cursor: 'pointer', fontWeight: 700 }}>상세 내용 {m.details.length}개</summary><ul className="small">{m.details.map((x, i) => <li key={i} style={{ margin: '4px 0' }}>{x}</li>)}</ul></details>}
                 <div className="xsmall muted" style={{ marginTop: 8 }}>작성 {m.owner_email}{m.notes_source ? ` · 출처 ${m.notes_source}` : ''}{m.share_emails?.length ? ` · 공유 ${m.share_emails.join(', ')}` : ''}</div>
               </div>
@@ -74,7 +95,7 @@ export default function MeetingsPage() {
   );
 }
 
-function MeetingForm({ m, onDone, onCancel }: { m: Partial<MentorMeeting>; onDone: () => void; onCancel: () => void }) {
+function MeetingForm({ m, engs, onDone, onCancel }: { m: Partial<MentorMeeting>; engs: LinkEng[]; onDone: () => void; onCancel: () => void }) {
   const [f, setF] = useState<Partial<MentorMeeting>>(m);
   const [raw, setRaw] = useState('');
   const { busy, error, ok, run } = useAsync();
@@ -104,6 +125,21 @@ function MeetingForm({ m, onDone, onCancel }: { m: Partial<MentorMeeting>; onDon
         <div><label>다음 단계 (줄마다 하나)</label><textarea value={(f.next_steps ?? []).join('\n')} onChange={(e) => setF({ ...f, next_steps: lines(e.target.value) })} /></div>
         <div><label>상세 내용 (줄마다 하나)</label><textarea value={(f.details ?? []).join('\n')} onChange={(e) => setF({ ...f, details: lines(e.target.value) })} /></div>
       </div>
+      <label>연결할 멘토링 건 (기업)</label>
+      {engs.length ? (
+        <div className="row" style={{ gap: 6 }}>
+          {engs.map((e) => {
+            const on = (f.linked_eng_ids ?? []).includes(e.id);
+            return (
+              <button key={e.id} type="button" onClick={() => setF({ ...f, linked_eng_ids: on ? (f.linked_eng_ids ?? []).filter((x) => x !== e.id) : [...(f.linked_eng_ids ?? []), e.id] })}
+                style={{ padding: '5px 12px', borderRadius: 999, fontSize: 13, background: on ? 'var(--accent)' : 'var(--surface)', color: on ? '#fff' : 'var(--text)', borderColor: on ? 'var(--accent)' : 'var(--border-strong)' }}>
+                {on ? '✓ ' : ''}{engLabel(e)}
+              </button>
+            );
+          })}
+        </div>
+      ) : <p className="small muted">연결할 수 있는 멘토링 건이 없습니다.</p>}
+      <p className="xsmall muted">연결하면 그 멘토링 건의 회차 탭과 사고 흐름에 이 회의가 함께 보입니다. 같은 기업의 다른 건에서도 보입니다. 공개 범위는 그대로입니다(작성자·공유한 사람만).</p>
       <label className="human">내가 얻은 것 · 내 멘토링에 적용할 것</label>
       <textarea value={f.my_takeaways ?? ''} onChange={set('my_takeaways')} />
       <label>공유할 사람 이메일 (쉼표로 구분, 앱 계정이 있는 사람)</label>
@@ -113,6 +149,42 @@ function MeetingForm({ m, onDone, onCancel }: { m: Partial<MentorMeeting>; onDon
         <button className="primary" disabled={busy} onClick={() => run(async () => { await call('saveMeeting', f); onDone(); })}>저장</button>
         <button onClick={onCancel}>취소</button>
       </div>
+    </div>
+  );
+}
+
+function NextSteps({ m, engs }: { m: MentorMeeting; engs: LinkEng[] }) {
+  const [target, setTarget] = useState(engs[0]?.id ?? '');
+  const [sent, setSent] = useState<string[]>([]);
+  const { busy, error, run } = useAsync();
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div className="row between">
+        <div className="small" style={{ fontWeight: 700 }}>다음 단계</div>
+        {engs.length > 0 && (
+          <div className="row small" style={{ gap: 6 }}>
+            실험 카드로 보낼 건
+            <select value={target} onChange={(e) => setTarget(e.target.value)} style={{ width: 'auto', padding: '4px 8px' }}>
+              {engs.map((e) => <option key={e.id} value={e.id}>{e.company}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+      <ul className="small" style={{ paddingLeft: 18 }}>
+        {(m.next_steps ?? []).map((x) => (
+          <li key={x} style={{ margin: '4px 0' }}>
+            {x}{' '}
+            {engs.length > 0 && (sent.includes(x)
+              ? <span className="badge accent">실험 카드로 보냄</span>
+              : <button style={{ padding: '2px 8px', fontSize: 12 }} disabled={busy} onClick={() => run(async () => {
+                  await call('saveExperiment', target, { hypothesis: x, method: `멘토 회의 "${m.title}" (${m.date})에서 나온 과제`, success_metric: '', origin: 'ai_raw' });
+                  setSent([...sent, x]);
+                })}>→ 실험 카드로</button>)}
+          </li>
+        ))}
+      </ul>
+      {engs.length === 0 && (m.linked_eng_ids ?? []).length === 0 && <p className="xsmall muted">멘토링 건에 연결하면 다음 단계를 그 건의 실험 카드로 보낼 수 있습니다.</p>}
+      {error && <div className="alert error small">{error}</div>}
     </div>
   );
 }

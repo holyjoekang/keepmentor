@@ -41,7 +41,7 @@ export const SHEETS = {
   PanelRuns: ['id', 'job_id', 'eng_id', 'result_json', 'mentor_decision', 'created_at'],
   MentorMeetings: [
     'id', 'owner_email', 'date', 'title', 'participants', 'share_emails', 'tags', 'summary', 'next_steps', 'details',
-    'my_takeaways', 'notes_source', 'created_at', 'updated_at',
+    'my_takeaways', 'notes_source', 'created_at', 'updated_at', 'linked_eng_ids',
   ],
   AuditLog: ['id', 'ts', 'user_email', 'action', 'sheet', 'row_id', 'detail'],
 } as const;
@@ -103,6 +103,8 @@ export interface MentorMeeting extends Row {
   owner_email: string; date: string; title: string; participants?: string; share_emails?: string[]; tags?: string[];
   summary?: string; next_steps?: string[]; details?: string[]; my_takeaways?: string; notes_source?: string;
   created_at?: string; updated_at?: string;
+  // 연결한 멘토링 건 (건을 통해 기업과도 연결된다)
+  linked_eng_ids?: string[];
 }
 
 export interface Bundle {

@@ -6,6 +6,7 @@ import { call } from '@/lib/client';
 import { ISSUE_CODES } from '@/lib/methodology';
 import { parseMeetingNotes, roundFromTitle, type ParsedNotes } from '@/lib/notes';
 import type { Session } from '@/lib/schema';
+import { RelatedMeetings } from './RelatedMeetings';
 import type { TabProps } from './types';
 
 const empty = (): Partial<Session> => ({
@@ -29,6 +30,7 @@ export function SessionsTab({ b, reload }: TabProps) {
           <button onClick={() => setImporting(true)}>회의록 가져오기 (Gemini·Meet)</button>
         </div>
       )}
+      <RelatedMeetings engId={b.engagement.id} />
       {importing && <NotesImport b={b} onDone={async () => { setImporting(false); await reload(); }} onCancel={() => setImporting(false)} />}
       {editing && <SessionForm b={b} s={editing} lastOpen={lastOpen.length} onDone={async () => { setEditing(null); await reload(); }} onCancel={() => setEditing(null)} />}
       {!b.sessions.length && <div className="card muted">아직 회차 기록이 없습니다.</div>}
