@@ -107,10 +107,30 @@ test('normal editing cannot reassign roles or change relationship ownership', as
   assert.equal(tables.Engagements[0].recorder_email,undefined);
 });
 
-test('system admins cannot read or modify private mentor meetings without sharing', async () => {
-  const {actions}=fixture();
-  assert.deepEqual(await actions(admin).meetings(),[]);
-  await assert.rejects(actions(admin).saveMeeting({id:'mtg',title:'침입',date:'2026-11-08'}),/작성자/);
+test('admins manage all meetings while other users keep scoped access', async () => {
+  const {actions,tables}=fixture();
+  tables.MentorMeetings[0].linked_eng_ids=['e1'];
+  assert.equal((await actions(admin).meetings()).length,1);
+  assert.deepEqual(await actions(mentee).meetings(),[]);
+  await assert.rejects(actions(mentee).saveMeeting({id:'mtg',title:'침입',date:'2026-11-08'}),/작성자/);
+  await actions(admin).saveMeeting({...tables.MentorMeetings[0],title:'관리자 수정',owner_email:admin.email});
+  assert.equal(tables.MentorMeetings[0].owner_email,mentor.email);
+  assert.deepEqual(tables.MentorMeetings[0].linked_eng_ids,['e1']);
+  const created=await actions(admin).saveMeeting({title:'관리자 회의',date:'2026-11-08'});
+  assert.equal(created.owner_email,admin.email);
+  for(const user of [mentor,mentee,institution]) await assert.rejects(actions(user).deleteMeeting('mtg'),/관리자/);
+  tables.MentorMeetings[0].share_emails=[mentee.email];
+  assert.equal((await actions(mentee).meetings()).length,1);
+  await assert.rejects(actions(mentee).saveMeeting({id:'mtg',title:'공유자 수정',date:'2026-11-08'}),/작성자/);
+  await actions(admin).deleteMeeting('mtg');
+  assert.equal((await actions(admin).meetings()).length,1);
+  assert.deepEqual(await actions(mentor).meetings(),[]);
+  assert.deepEqual(await actions(mentee).meetings(),[]);
+  assert.deepEqual(await actions(mentor).meetingsForEng('e1'),[]);
+  await assert.rejects(actions(admin).saveMeeting({id:'mtg',title:'복원 시도',date:'2026-11-08'}),/찾을 수/);
+  await assert.rejects(actions(admin).deleteMeeting('missing'),/찾을 수/);
+  assert.ok(tables.AuditLog.some(x=>x.action==='delete'&&x.row_id==='mtg'&&x.user_email===admin.email));
+  assert.equal(blocksWrite('deleteMeeting','1'),true);
 });
 
 test('received mentoring keeps actual mentee role with explicit recording capability', async () => {

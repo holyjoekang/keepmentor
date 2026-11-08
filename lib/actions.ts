@@ -55,7 +55,7 @@ export function createActions(store: Store, me: User) {
 
   async function visibleMeetings() {
     const all = await store.list<MentorMeeting>('MentorMeetings');
-    return all.filter((m) => m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email));
+    return all.filter((m) => !m.deleted_at && (isAdmin || m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email)));
   }
 
   async function bundle(engId: string): Promise<Bundle> {
@@ -373,10 +373,10 @@ export function createActions(store: Store, me: User) {
     async meetings() {
       return (await visibleMeetings()).sort((a, b) => String(b.date).localeCompare(String(a.date)));
     },
-    // 연결할 수 있는 멘토링 건 (내가 접근할 수 있는 건)
+    // 회의 연결용 목록: 관리자는 전체, 일반 사용자는 배정된 건의 기본 정보만 제공한다.
     async linkableEngagements() {
       const [engs, companies] = await Promise.all([store.list<Engagement>('Engagements'), store.list<Company>('Companies')]);
-      return engs.filter((e) => roleIn(e)).map((e) => ({
+      return engs.filter((e) => isAdmin || roleIn(e)).map((e) => ({
         id: e.id, company_id: e.company_id, company: companies.find((c) => c.id === e.company_id)?.name ?? '(기업 미상)',
         kind: e.kind ?? 'given', mentor_name: e.mentor_name ?? '', role: roleIn(e),
         can_record: roleIn(e) === 'mentor' || isRecorder(e),
@@ -395,17 +395,19 @@ export function createActions(store: Store, me: User) {
     async saveMeeting(m: Partial<MentorMeeting>) {
       req(m.title, '회의 제목'); req(m.date, '일시');
       const share = (m.share_emails ?? []).map((x) => String(x).trim().toLowerCase()).filter(Boolean);
-      // 내가 접근할 수 있는 건만 연결한다
+      // 관리자는 전체 건에 회의를 연결할 수 있고, 일반 사용자는 배정된 건만 연결한다.
       const engs = await store.list<Engagement>('Engagements');
-      const linked = Array.from(new Set((m.linked_eng_ids ?? []).filter((id) => { const e = engs.find((x) => x.id === id); return !!e && !!roleIn(e); })));
+      const linked = Array.from(new Set((m.linked_eng_ids ?? []).filter((id) => { const e = engs.find((x) => x.id === id); return !!e && (isAdmin || !!roleIn(e)); })));
       m = { ...m, linked_eng_ids: linked };
       if (m.id) {
         const prev = (await store.list<MentorMeeting>('MentorMeetings')).find((x) => x.id === m.id);
-        if (!prev) fail('회의 기록을 찾을 수 없습니다.');
-        if (prev!.owner_email?.toLowerCase() !== email) fail('작성자만 고칠 수 있습니다.');
-        const { id, owner_email: _o, created_at: _c, ...rest } = m;
-        void _o; void _c;
-        return store.update<MentorMeeting>('MentorMeetings', id!, { ...rest, share_emails: share, updated_at: nowIso() });
+        if (!prev || prev.deleted_at) fail('회의 기록을 찾을 수 없습니다.');
+        if (!isAdmin && prev!.owner_email?.toLowerCase() !== email) fail('작성자 또는 관리자만 고칠 수 있습니다.');
+        const { id, owner_email: _o, created_at: _c, deleted_at: _d, deleted_by: _b, ...rest } = m;
+        void _o; void _c; void _d; void _b;
+        const saved = await store.update<MentorMeeting>('MentorMeetings', id!, { ...rest, share_emails: share, updated_at: nowIso() });
+        await audit('update', 'MentorMeetings', id!);
+        return saved;
       }
       const row: MentorMeeting = {
         id: newId('MTG'), owner_email: email, date: String(m.date), title: String(m.title), participants: m.participants ?? '',
@@ -416,6 +418,15 @@ export function createActions(store: Store, me: User) {
       await store.insert('MentorMeetings', row);
       await audit('create', 'MentorMeetings', row.id);
       return row;
+    },
+
+    async deleteMeeting(id: string) {
+      if (!isAdmin) fail('관리자만 회의 기록을 삭제할 수 있습니다.');
+      const meeting = (await store.list<MentorMeeting>('MentorMeetings')).find((m) => m.id === id && !m.deleted_at);
+      if (!meeting) fail('회의 기록을 찾을 수 없습니다.');
+      await store.update<MentorMeeting>('MentorMeetings', id, { deleted_at: nowIso(), deleted_by: email, updated_at: nowIso() });
+      await audit('delete', 'MentorMeetings', id);
+      return true;
     },
 
     // ---- 관리 ----

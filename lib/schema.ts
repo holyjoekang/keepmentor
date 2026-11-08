@@ -41,7 +41,7 @@ export const SHEETS = {
   PanelRuns: ['id', 'job_id', 'eng_id', 'result_json', 'mentor_decision', 'created_at'],
   MentorMeetings: [
     'id', 'owner_email', 'date', 'title', 'participants', 'share_emails', 'tags', 'summary', 'next_steps', 'details',
-    'my_takeaways', 'notes_source', 'meeting_notes', 'created_at', 'updated_at', 'linked_eng_ids',
+    'my_takeaways', 'notes_source', 'meeting_notes', 'deleted_at', 'deleted_by', 'created_at', 'updated_at', 'linked_eng_ids',
   ],
   AuditLog: ['id', 'ts', 'user_email', 'action', 'sheet', 'row_id', 'detail'],
 } as const;
@@ -101,6 +101,7 @@ export interface PanelRun extends Row {
 }
 
 export interface MentorMeeting extends Row {
+  deleted_at?: string; deleted_by?: string;
   owner_email: string; date: string; title: string; participants?: string; share_emails?: string[]; tags?: string[];
   summary?: string; next_steps?: string[]; details?: string[]; my_takeaways?: string; notes_source?: string; meeting_notes?: string;
   created_at?: string; updated_at?: string;

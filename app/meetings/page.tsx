@@ -35,7 +35,9 @@ export default function MeetingsPage() {
   }
   useEffect(() => { const f = new URLSearchParams(window.location.search).get('eng'); if (f) setFilter(f); }, []);
   useEffect(() => { if (me) load(); }, [me]);
+  const [deleting, setDeleting] = useState<string | null>(null);
   if (!me) return <TopBar />;
+  const isAdmin = String(me.is_admin) === 'true';
 
   const k = q.trim().toLowerCase();
   const shown = (list ?? []).filter((m) => (!k || [m.title, m.participants, m.summary, m.meeting_notes, (m.tags ?? []).join(' ')].join(' ').toLowerCase().includes(k))
@@ -50,7 +52,7 @@ export default function MeetingsPage() {
           <div>
             <div className="eyebrow">Mentor meetings</div>
             <h1 style={{ marginBottom: 2 }}>멘토 회의</h1>
-            <p className="small muted" style={{ margin: 0 }}>멘토·투자자·전문가와 나눈 회의를 기록합니다. 특정 기업의 멘토링 건과 별개이며, 작성자와 공유한 사람만 봅니다.</p>
+            <p className="small muted" style={{ margin: 0 }}>멘토·투자자·전문가와 나눈 회의를 기록합니다. 특정 기업의 멘토링 건과 별개이며, 작성자·공유받은 사람·관리자가 볼 수 있습니다. 관리자는 모든 회의를 관리합니다.</p>
           </div>
           <button className="primary" onClick={() => setEdit(blank())}><Icon name="users" size={16} /> 새 회의 기록</button>
         </div>
@@ -78,7 +80,13 @@ export default function MeetingsPage() {
               </div>
               <div className="row">
                 {m.meeting_notes && <button onClick={() => downloadMarkdown(m.meeting_notes!, `${m.title}-${m.date}`)}>.md 다운로드</button>}
-                {m.owner_email?.toLowerCase() === me.email.toLowerCase() && <button onClick={() => setEdit(m)}>수정</button>}
+                {(isAdmin || m.owner_email?.toLowerCase() === me.email.toLowerCase()) && <button onClick={() => setEdit(m)}>수정</button>}
+                {isAdmin && <button disabled={deleting !== null} onClick={async () => {
+                  if (!window.confirm(`“${m.title}” 회의를 삭제하시겠습니까? 목록과 연결된 멘토링에서 더 이상 표시되지 않습니다.`)) return;
+                  setDeleting(m.id); setError(null);
+                  try { await call('deleteMeeting', m.id); if (edit?.id === m.id) setEdit(null); if (open === m.id) setOpen(null); await load(); }
+                  catch (e) { setError((e as Error).message); } finally { setDeleting(null); }
+                }}>{deleting === m.id ? '삭제 중…' : '삭제'}</button>}
                 <button onClick={() => setOpen(open === m.id ? null : m.id)}>{open === m.id ? '접기' : '열기'}</button>
               </div>
             </div>
@@ -148,7 +156,7 @@ function MeetingForm({ m, engs, onDone, onCancel }: { m: Partial<MentorMeeting>;
           })}
         </div>
       ) : <p className="small muted">연결할 수 있는 멘토링 건이 없습니다.</p>}
-      <p className="xsmall muted">연결하면 그 멘토링 건의 회차 탭과 사고 흐름에 이 회의가 함께 보입니다. 같은 기업의 다른 건에서도 보입니다. 공개 범위는 그대로입니다(작성자·공유한 사람만).</p>
+      <p className="xsmall muted">연결하면 그 멘토링 건의 회차 탭과 사고 흐름에 이 회의가 함께 보입니다. 같은 기업의 다른 건에서도 보입니다. 공개 범위는 그대로입니다(작성자·공유한 사람·관리자).</p>
       <label className="human">내가 얻은 것 · 내 멘토링에 적용할 것</label>
       <textarea value={f.my_takeaways ?? ''} onChange={set('my_takeaways')} />
       <label>공유할 사람 이메일 (쉼표로 구분, 앱 계정이 있는 사람)</label>

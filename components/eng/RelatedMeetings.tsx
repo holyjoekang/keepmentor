@@ -14,7 +14,7 @@ export function useRelatedMeetings(engId: string) {
   return list;
 }
 
-// 멘토링 건에 연결된 멘토 회의 (작성자·공유받은 사람에게만 보인다)
+// 멘토링 건에 연결된 멘토 회의 (작성자·공유받은 사람·관리자에게 보인다)
 export function RelatedMeetings({ engId }: { engId: string }) {
   const list = useRelatedMeetings(engId);
   const [open, setOpen] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function RelatedMeetings({ engId }: { engId: string }) {
         <div className="card-title" style={{ margin: 0 }}><span className="ichip blue"><Icon name="users" /></span><h2>관련 멘토 회의 · {list.length}</h2></div>
         <Link href={`/meetings?eng=${engId}`} className="small">멘토 회의에서 보기 →</Link>
       </div>
-      <p className="xsmall muted" style={{ margin: '6px 0 0' }}>이 기업과 연결된 멘토끼리의 회의입니다. 작성자와 공유받은 사람만 볼 수 있습니다.</p>
+      <p className="xsmall muted" style={{ margin: '6px 0 0' }}>이 기업과 연결된 멘토끼리의 회의입니다. 작성자·공유받은 사람·관리자가 볼 수 있습니다.</p>
       {list.map((m) => (
         <div key={m.id} style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 10 }}>
           <div className="row between">
