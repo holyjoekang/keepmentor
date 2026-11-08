@@ -25,7 +25,7 @@
 | 모드 | 저장 위치 | 용도 |
 | --- | --- | --- |
 | `demo` (기본) | 브라우저 localStorage | Vercel에 바로 올려 시연합니다. 데모 사용자 3명(멘토·멘티·기관)과 예시 데이터가 들어 있습니다. |
-| `live` | Google Sheets (Apps Script 웹앱) | 실제 프로토타입 운영에 씁니다. |
+| `live` | Supabase PostgreSQL 또는 기존 Google Sheets | 실제 운영에 씁니다. `STORAGE_PROVIDER`로 선택합니다. |
 
 ## 로컬 실행
 
@@ -45,12 +45,24 @@ http://localhost:3000 에서 데모 모드로 열립니다.
 | 변수 | 값 |
 | --- | --- |
 | `NEXT_PUBLIC_MODE` | `live` |
-| `GAS_URL` | Apps Script 웹앱 배포 URL (`.../exec`) |
-| `GAS_SECRET` | Apps Script 스크립트 속성 `SECRET`과 같은 값 |
+| `STORAGE_PROVIDER` | 이전 검증 후 `supabase` (미설정 시 기존 `sheets` 유지) |
+| `SUPABASE_URL` | Supabase 프로젝트 URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 서버 전용 service_role 키 또는 secret key |
 | `SESSION_SECRET` | 로그인 쿠키 서명용 임의의 긴 문자열 |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | 도입 문의를 받을 이메일 (없으면 문의 버튼이 비활성화됨, 데모 모드에서도 설정 가능) |
 
-## Google Sheets 연결 (live 모드)
+## Supabase 전환 (기존 GitHub·Vercel 유지)
+
+[데이터 이전 및 운영 전환 절차](docs/supabase-migration.md)를 따릅니다. 기존 `keepmentor.vercel.app` 프로젝트와 도메인을 그대로 사용하며, 복사 검증 전까지는 Sheets를 유지합니다. SQL은 `supabase/migrations/202611080001_keepmentor.sql`입니다.
+
+```bash
+# Node.js 24, 추가 패키지 불필요
+node --test tests/*.test.mjs
+npm run build
+npm run typecheck
+```
+
+## 기존 Google Sheets 연결 (STORAGE_PROVIDER=sheets)
 
 1. 새 Google 스프레드시트를 만들고, 확장 프로그램 → Apps Script에 `gas/Code.gs` 내용을 붙여 넣습니다.
 2. 프로젝트 설정 → 스크립트 속성에 `SECRET`을 추가합니다.
@@ -63,7 +75,7 @@ curl -X POST https://<your-app>.vercel.app/api/setup -H 'Content-Type: applicati
 
 5. 관리자로 로그인해 관리 화면에서 프로그램과 사용자(멘토·멘티)를 등록하고, 각자에게 접근 코드를 전달합니다.
 
-시트 구조는 `lib/schema.ts`에 정의되어 있습니다. 시트는 Users, Programs, Companies, Engagements, Assessments, Sessions, Experiments, AIJobs, PanelRuns, AuditLog입니다.
+시트 구조는 `lib/schema.ts`에 정의되어 있습니다. 시트는 Users, Programs, Companies, Engagements, Assessments, Sessions, Experiments, AIJobs, PanelRuns, MentorMeetings, AuditLog입니다.
 
 ## Claude 프로젝트 연계
 
@@ -88,7 +100,9 @@ lib/methodology.ts  방법론 상수 (문항, 증거등급, 관문, 이슈 코�
 lib/scoring.ts      점수·병목·레드플래그·단계 계산
 lib/packets.ts      AI 패킷 생성과 결과 검증, 사람 점검 규칙
 lib/actions.ts      비즈니스 규칙과 권한 (live는 서버, demo는 브라우저에서 같은 코드 실행)
-lib/store.ts        저장소 어댑터 (Apps Script / localStorage)
+lib/store.ts        저장소 인터페이스와 기존 Apps Script / localStorage 어댑터
+lib/server-store.ts 서버 저장소 선택
+lib/supabase-store.ts Supabase 서버 전용 어댑터
 gas/Code.gs         Google Apps Script 저장소
 ```
 

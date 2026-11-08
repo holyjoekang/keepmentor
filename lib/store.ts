@@ -1,6 +1,6 @@
 import { SHEETS, type Row, type SheetName } from './schema';
 
-// 저장소 어댑터: live 모드는 Apps Script(Google Sheets), demo 모드는 localStorage.
+// 저장소 인터페이스: live는 서버에서 Sheets/Supabase를 선택하고 demo는 localStorage를 사용합니다.
 export interface Store {
   list<T extends Row = Row>(sheet: SheetName): Promise<T[]>;
   insert<T extends Row>(sheet: SheetName, row: T): Promise<T>;
