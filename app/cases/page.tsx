@@ -40,7 +40,7 @@ export default function CasesPage() {
         <div className="pw">
           <div className="ed-kicker">Case Library</div>
           <h1 className="serif" style={{ marginTop: 18 }}>대표가 가져오는 질문,<br />멘토가 풀어 가는 과정.</h1>
-          <p className="lead">단계마다 대표들이 가장 자주 가져오는 이슈를 골라, 겉으로 보이는 문제와 근본 원인, 진단 질문, 세션 진행, 2주 과제, 멘토가 빠지기 쉬운 함정까지 정리했습니다.</p>
+          <p className="lead">고객 검증부터 AI 품질, 결제, 개발·운영까지 멘티들이 반복해서 겪는 문제를 다룹니다. 공개 자료와 기존 방법론을 바탕으로 원인 가설, 진단 질문, 2주 실행 과제와 확인할 증거를 정리했습니다. 사례는 교육용 재구성이며 각 사례의 출처를 함께 확인하세요.</p>
           <div className="ed-facts">
             <div><strong>{data ? data.cases.length : '–'}건</strong><span>멘토링 사례</span></div>
             <div><strong>{data ? data.stages.length : '–'}단계</strong><span>문제 탐색부터 확장까지</span></div>

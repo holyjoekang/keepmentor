@@ -143,7 +143,7 @@ export default function CaseDetail() {
 
               {!!c.resources?.length && (
                 <Block kicker="Resources" title="참고 자료">
-                  <ul className="small" style={{ paddingLeft: 18 }}>{c.resources.map((r) => <li key={r} style={{ margin: '5px 0' }}>{r}</li>)}</ul>
+                  <ul className="small" style={{ paddingLeft: 18 }}>{c.resources.map((r) => <li key={r} style={{ margin: '5px 0' }}>{r.split(/(https:\/\/[^\s]+)/g).map((part, i) => part.startsWith('https://') ? <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a> : part)}</li>)}</ul>
                 </Block>
               )}
 
@@ -161,7 +161,7 @@ export default function CaseDetail() {
                 {prev ? <Link href={`/cases/${encodeURIComponent(prev.id)}`} className="small">← {prev.id} {prev.title}</Link> : <span />}
                 {next ? <Link href={`/cases/${encodeURIComponent(next.id)}`} className="small" style={{ textAlign: 'right' }}>{next.id} {next.title} →</Link> : <span />}
               </div>
-              <p className="xsmall faint" style={{ marginTop: 24 }}>에이전트 시뮬레이션 사례이며 실제 기업의 기록이 아닙니다. 출처: <a href={data.source.url} target="_blank" rel="noopener">{data.source.name}</a></p>
+              <p className="xsmall faint" style={{ marginTop: 24 }}>{c.id.startsWith('WEB-') ? '공개 자료를 바탕으로 재구성한 교육용 사례입니다. 실제 기업 기록이나 성과가 아니며, 개별 근거는 위 참고 자료에서 확인하세요. 기존 사례집: ' : '에이전트 시뮬레이션 사례이며 실제 기업의 기록이 아닙니다. 출처: '} <a href={data.source.url} target="_blank" rel="noopener">{data.source.name}</a></p>
             </div>
           </section>
         </>

@@ -69,6 +69,12 @@ for key, tr in src["tracks"].items():
         c.update({"stage": applies[0] if applies else None, "km_stage": KM_STAGE.get(applies[0]) if applies else None, "track": key})
         cases.append(c)
 
+supplement = ROOT / "data/cases-supplement.json"
+if supplement.exists():
+    cases.extend(json.loads(supplement.read_text(encoding="utf-8")))
+if len({c["id"] for c in cases}) != len(cases):
+    raise ValueError("Duplicate case IDs")
+
 out = {
     "source": {"name": site["title"], "edition": site.get("edition", ""), "built": src.get("built", ""),
                "url": "https://holyjoekang.github.io/joyhouse/mentoring.html",
