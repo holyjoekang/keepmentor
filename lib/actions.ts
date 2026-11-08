@@ -410,7 +410,7 @@ export function createActions(store: Store, me: User) {
       const row: MentorMeeting = {
         id: newId('MTG'), owner_email: email, date: String(m.date), title: String(m.title), participants: m.participants ?? '',
         share_emails: share, tags: m.tags ?? [], summary: m.summary ?? '', next_steps: m.next_steps ?? [], details: m.details ?? [],
-        my_takeaways: m.my_takeaways ?? '', notes_source: m.notes_source ?? '', linked_eng_ids: linked,
+        meeting_notes: m.meeting_notes ?? '', my_takeaways: m.my_takeaways ?? '', notes_source: m.notes_source ?? '', linked_eng_ids: linked,
         created_at: nowIso(), updated_at: nowIso(),
       };
       await store.insert('MentorMeetings', row);

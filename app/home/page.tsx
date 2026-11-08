@@ -1,5 +1,7 @@
 'use client';
 
+import { MentoringArt } from '@/components/MentoringArt';
+
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/icons';
@@ -44,8 +46,9 @@ export default function HomePage() {
   return (
     <>
       <TopBar me={me} />
-      <div className="wrap">
-        <div className="row between" style={{ marginBottom: 6 }}>
+      <div className="wrap mentoring-workspace">
+        <MentoringArt />
+        <div className="row between mentoring-heading" style={{ marginBottom: 6 }}> 
           <div>
             <div className="eyebrow">Dashboard</div>
             <h1 style={{ marginBottom: 2 }}>{me.name}님의 멘토링</h1>
@@ -81,10 +84,11 @@ export default function HomePage() {
           </div>
         )}
         <div className="grid grid-2">
-          {items.map((it) => {
+          {items.map((it, index) => {
             const pct = Math.min(100, Math.round((it.sessions_done / Math.max(1, it.session_total)) * 100));
             return (
-              <Link key={it.eng_id} href={`/eng/${it.eng_id}`} className="card link" style={{ margin: 0 }}>
+              <Link key={it.eng_id} href={`/eng/${it.eng_id}`} className="card link mentoring-gallery-card" style={{ margin: 0 }}>
+                <MentoringArt variant={index} compact />
                 <div className="row between" style={{ alignItems: 'flex-start' }}>
                   <div className="row" style={{ gap: 12 }}>
                     <span className="ichip lg" style={{ background: 'var(--navy)', color: '#fff', fontWeight: 800 }}>{it.company.slice(0, 1)}</span>

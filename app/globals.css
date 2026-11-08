@@ -390,3 +390,36 @@ pre.packet { white-space: pre-wrap; word-break: break-word; background: var(--su
 .meeting-markdown input[type="checkbox"] { width: auto; margin-right: .5em; }
 .meeting-markdown a { color: var(--accent); text-decoration: underline; }
 @media (max-width: 600px) { .meeting-markdown { padding: 12px; } .meeting-markdown h1 { font-size: 1.35rem; } }
+
+/* Mentoring gallery — artwork stays separate from working text. */
+body:has(.mentoring-workspace) { background: #f8f5ef; }
+.mentoring-workspace {
+  --bg: #f8f5ef; --surface-2: #f4f1eb; --border: #e8e1d6; --border-strong: #cfc3b2;
+  --text: #252a35; --text-2: #626170; --text-3: #79736c;
+  --accent: #354553; --accent-soft: #eaece9;
+  --shadow: 0 5px 22px rgba(74, 56, 33, .045);
+  max-width: 1160px; padding-top: 28px; padding-bottom: 56px;
+}
+body:has(.mentoring-workspace) .topbar { background: rgba(252,250,246,.96); border-bottom-color: #e8e1d6; }
+.mentoring-workspace h1, .mentoring-workspace h2 { font-family: 'Noto Serif KR', 'Batang', Georgia, serif; letter-spacing: -.025em; }
+.mentoring-workspace h1 { font-size: clamp(25px, 3vw, 34px); }
+.mentoring-workspace .eyebrow { color: #93672f; letter-spacing: .13em; }
+.mentoring-heading { gap: 20px; padding: 8px 0 16px; }
+.mentoring-art { margin: 0 0 24px; position: relative; overflow: hidden; border-radius: 16px; background: #ece4d5; }
+.mentoring-art img { display: block; width: 100%; height: 210px; object-fit: cover; object-position: center; }
+.mentoring-art figcaption { position: absolute; bottom: 10px; right: 12px; max-width: calc(100% - 24px); background: rgba(255,253,248,.94); color: #413c34; padding: 4px 10px; border-radius: 5px; font-size: 10px; letter-spacing: .035em; }
+.mentoring-gallery-card { overflow: hidden; padding: 24px; }
+.mentoring-gallery-card .mentoring-art { margin: -24px -24px 24px; border-radius: 0; }
+.mentoring-art.compact img { height: 190px; }
+.mentoring-workspace .hero-band { background: #fff; border-color: var(--border); }
+.mentoring-workspace .tabs { gap: 8px; margin-top: 24px; }
+.mentoring-workspace .tabs button.on { color: #765324; border-bottom-color: #a77838; }
+.mentoring-workspace button:focus-visible, .mentoring-workspace a:focus-visible { outline: 3px solid #a77838; outline-offset: 3px; }
+.mentoring-workspace .meeting-markdown h1 { font-size: 1.65em; }
+@media (max-width: 600px) {
+ .mentoring-workspace { padding-top: 16px; }
+ .mentoring-art img { height: 150px; }
+ .mentoring-art.compact img { height: 170px; }
+ .mentoring-workspace .grid-2 { grid-template-columns: minmax(0,1fr); }
+ .mentoring-heading > .row { width: 100%; }
+}

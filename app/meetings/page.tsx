@@ -1,7 +1,11 @@
 'use client';
 
+import { MentoringArt } from '@/components/MentoringArt';
+
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { MarkdownNotes, downloadMarkdown } from '@/components/MarkdownNotes';
+import { MarkdownView } from '@/components/MarkdownView';
 import { Icon } from '@/components/icons';
 import { ErrorBox, Status, TopBar, useAsync, useMe } from '@/components/ui';
 import { call } from '@/lib/client';
@@ -34,14 +38,15 @@ export default function MeetingsPage() {
   if (!me) return <TopBar />;
 
   const k = q.trim().toLowerCase();
-  const shown = (list ?? []).filter((m) => (!k || [m.title, m.participants, m.summary, (m.tags ?? []).join(' ')].join(' ').toLowerCase().includes(k))
+  const shown = (list ?? []).filter((m) => (!k || [m.title, m.participants, m.summary, m.meeting_notes, (m.tags ?? []).join(' ')].join(' ').toLowerCase().includes(k))
     && (!filter || (filter === 'none' ? !(m.linked_eng_ids ?? []).length : (m.linked_eng_ids ?? []).includes(filter))));
 
   return (
     <>
       <TopBar me={me} />
-      <div className="wrap">
-        <div className="row between">
+      <div className="wrap mentoring-workspace">
+        <MentoringArt variant={1} />
+        <div className="row between mentoring-heading">
           <div>
             <div className="eyebrow">Mentor meetings</div>
             <h1 style={{ marginBottom: 2 }}>멘토 회의</h1>
@@ -50,7 +55,7 @@ export default function MeetingsPage() {
           <button className="primary" onClick={() => setEdit(blank())}><Icon name="users" size={16} /> 새 회의 기록</button>
         </div>
         <ErrorBox error={error} />
-        {edit && <MeetingForm m={edit} engs={engs} onDone={async () => { setEdit(null); await load(); }} onCancel={() => setEdit(null)} />}
+        {edit && <MeetingForm key={edit.id ?? "new"} m={edit} engs={engs} onDone={async () => { setEdit(null); await load(); }} onCancel={() => setEdit(null)} />}
         <div className="row" style={{ margin: '16px 0', gap: 10 }}>
           <input placeholder="검색: 제목, 참석자, 태그" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 320 }} />
           <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ width: 'auto' }}>
@@ -72,13 +77,15 @@ export default function MeetingsPage() {
                 </div>
               </div>
               <div className="row">
+                {m.meeting_notes && <button onClick={() => downloadMarkdown(m.meeting_notes!, `${m.title}-${m.date}`)}>.md 다운로드</button>}
                 {m.owner_email?.toLowerCase() === me.email.toLowerCase() && <button onClick={() => setEdit(m)}>수정</button>}
                 <button onClick={() => setOpen(open === m.id ? null : m.id)}>{open === m.id ? '접기' : '열기'}</button>
               </div>
             </div>
-            {m.summary && <p className="small" style={{ marginTop: 10, whiteSpace: 'pre-wrap' }}>{m.summary}</p>}
+            {m.summary && <MarkdownView text={m.summary} />}
             {open === m.id && (
               <div style={{ marginTop: 10 }}>
+                {m.meeting_notes && <MarkdownView text={m.meeting_notes} />}
                 <div className="panel human" style={{ marginBottom: 10 }}>
                   <div className="panel-label" style={{ color: 'var(--green)' }}><Icon name="pen" size={14} /> 내가 얻은 것 · 적용할 것</div>
                   <div className="small" style={{ whiteSpace: 'pre-wrap' }}>{m.my_takeaways || '(아직 작성하지 않았습니다)'}</div>
@@ -110,7 +117,7 @@ function MeetingForm({ m, engs, onDone, onCancel }: { m: Partial<MentorMeeting>;
           <textarea value={raw} onChange={(e) => setRaw(e.target.value)} style={{ minHeight: 120, marginTop: 8, fontSize: 13 }} />
           <button style={{ marginTop: 6 }} disabled={!raw.trim()} onClick={() => {
             const p = parseMeetingNotes(raw);
-            setF({ ...f, title: f.title || p.title, date: p.date || f.date, summary: p.summary, next_steps: p.nextSteps, details: p.details, notes_source: p.title || 'Gemini 회의록' });
+            setF({ ...f, title: f.title || p.title, date: p.date || f.date, summary: p.summary, next_steps: p.nextSteps, details: p.details, notes_source: p.title || 'Gemini 회의록', meeting_notes: raw });
           }}>나눠 채우기</button>
         </details>
       )}
@@ -120,6 +127,8 @@ function MeetingForm({ m, engs, onDone, onCancel }: { m: Partial<MentorMeeting>;
         <div><label>참석자 (이름·소속)</label><input value={f.participants ?? ''} onChange={set('participants')} placeholder="예: 이광일 멘토, 엔젤투자자 1명" /></div>
         <div><label>태그 (쉼표로 구분)</label><input value={(f.tags ?? []).join(', ')} onChange={(e) => setF({ ...f, tags: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })} /></div>
       </div>
+      <MarkdownNotes value={f.meeting_notes ?? ''} onChange={(text) => setF({ ...f, meeting_notes: text })} filename={`${f.title || '멘토회의'}-${f.date || ''}`} />
+      <p className="small muted">파일 내용은 회의록에 그대로 저장됩니다. 아래 요약과 다음 단계는 별도로 정리할 수 있습니다.</p>
       <label>요약</label><textarea value={f.summary ?? ''} onChange={set('summary')} />
       <div className="grid grid-2" style={{ gap: 12 }}>
         <div><label>다음 단계 (줄마다 하나)</label><textarea value={(f.next_steps ?? []).join('\n')} onChange={(e) => setF({ ...f, next_steps: lines(e.target.value) })} /></div>

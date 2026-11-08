@@ -1,5 +1,7 @@
 'use client';
 
+import { MentoringArt } from '@/components/MentoringArt';
+
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -72,7 +74,7 @@ export default function EngagementPage() {
   return (
     <>
       <TopBar me={me} />
-      <div className="wrap">
+      <div className="wrap mentoring-workspace">
         <ErrorBox error={error} />
         {b && <Header b={b} />}
         {b && (
@@ -120,6 +122,7 @@ function Header({ b }: { b: Bundle }) {
   return (
     <>
       <div className="xsmall muted" style={{ marginBottom: 8 }}><Link href="/home">내 멘토링</Link> / {b.company.name}</div>
+      <MentoringArt variant={2} />
       <div className="hero-band">
         <div className="row between" style={{ alignItems: 'flex-start' }}>
           <div className="row" style={{ gap: 14 }}>
