@@ -31,6 +31,7 @@ export function TopBar({ me, variant = 'app' }: { me?: Me | null; variant?: 'app
         <Link href="/cases" className="navlink hide-sm">사례</Link>
         {me && <Link href="/home" className="navlink">내 멘토링</Link>}
         {me && <Link href="/meetings" className="navlink">멘토 회의</Link>}
+        <details className="mobile-menu"><summary aria-label="앱 메뉴">메뉴 ☰</summary><nav aria-label="앱 모바일 메뉴"><Link href="/">방법론</Link><Link href="/cases">사례</Link><Link href="/guide">사용 지침</Link></nav></details>
         {MODE === 'demo' && <span className="badge warn">데모</span>}
       </div>
       {me ? (

@@ -31,6 +31,9 @@ export function PubNav({ me }: { me?: Me | null }) {
         <div className="row" style={{ gap: 14 }}>
           <Link href={me ? '/home' : '/login'} className="nl" style={{ fontWeight: 600 }}>{me ? '내 멘토링' : '로그인'}</Link>
           <Link href="/solutions#contact" className="btn indigo">도입 문의</Link>
+          <details className="mobile-menu"><summary aria-label="사이트 메뉴">메뉴 ☰</summary><nav aria-label="모바일 메뉴">
+            <Link href="/">방법론</Link><Link href="/cases">사례</Link><Link href="/solutions">도입 안내</Link><Link href="/about">소개</Link><Link href="/home">내 멘토링</Link><Link href="/meetings">멘토 회의</Link><Link href="/solutions#contact">도입 문의</Link>
+          </nav></details>
         </div>
       </div>
     </header>
@@ -43,7 +46,7 @@ export function PubFooter() {
       <div className="pw">
         <div className="cols">
           <div>
-            <Logo size={30} light />
+            <Logo size={30} />
             <p style={{ marginTop: 14, maxWidth: 360 }}>진단 → 처방 → 실험 → 점검. 사람이 먼저 쓰고 AI는 보완하는 스타트업 멘토링 방법론과 운영 도구.</p>
           </div>
           <div>

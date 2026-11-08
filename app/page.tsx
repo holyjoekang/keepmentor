@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { MentoringArt } from '@/components/MentoringArt';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/icons';
 import { PubFooter, PubNav } from '@/components/Public';
@@ -22,10 +23,15 @@ export default function MethodPage() {
       <section className="ed-hero" style={{ backgroundImage: 'url(/images/diagnosis.jpg)', minHeight: 460 }}>
         <div className="pw">
           <div className="ed-kicker">Methodology</div>
-          <h1 className="serif" style={{ marginTop: 18 }}>Keep Mentor 멘토링은<br />이렇게 진행됩니다.</h1>
+          <h1 className="serif" style={{ marginTop: 18 }}>더 나은 질문.<br />더 선명한 성장.</h1>
           <p className="lead">진단 기준, 단계 판정, 회차 운영, 사람과 AI의 역할, 성과 측정까지 모두 공개합니다. 멘토와 멘티는 같은 절차를 보고 같은 결과물을 남깁니다.</p>
+          <div className="hero-actions">
+            <Link href={me ? '/home' : '/login'} className="btn primary lg">멘토링 시작하기</Link>
+            <Link href="/cases" className="btn lg">사례 살펴보기 →</Link>
+          </div>
         </div>
       </section>
+      <div className="home-art"><MentoringArt /></div>
 
       <nav className="sticky-nav" style={{ top: 63 }}>
         <div className="wrap row" style={{ padding: '0 16px' }}>
