@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Status, TopBar, useAsync, useMe } from '@/components/ui';
 import { call } from '@/lib/client';
+import { EngagementRoles } from '@/components/EngagementRoles';
 import type { Program, User } from '@/lib/schema';
 
 export default function AdminPage() {
@@ -47,7 +48,7 @@ export default function AdminPage() {
           </div>
           <div className="card">
             <h2>사용자</h2>
-            <p className="small muted">멘토·멘티 모두 여기서 등록하고 접근 코드를 전달합니다. 역할은 멘토링 건마다 정해집니다.</p>
+            <p className="small muted">멘토·멘티 모두 여기서 등록하고 접근 코드를 전달합니다. 등록 후 아래 멘토링별 역할 배정에서 담당 건과 역할을 지정하세요.</p>
             <table>
               <thead><tr><th>이름</th><th>이메일</th><th>소속</th></tr></thead>
               <tbody>{users.map((x) => <tr key={x.id}><td>{x.name} {String(x.is_admin) === 'true' && <span className="badge">관리자</span>}</td><td className="small">{x.email}</td><td className="small">{x.affiliation}</td></tr>)}</tbody>
@@ -57,12 +58,13 @@ export default function AdminPage() {
             <label>소속</label><input value={u.affiliation} onChange={(e) => setU({ ...u, affiliation: e.target.value })} />
             <label>접근 코드</label><input value={u.access_code} onChange={(e) => setU({ ...u, access_code: e.target.value })} />
             <div className="row" style={{ marginTop: 8 }}>
-              <input type="checkbox" style={{ width: 'auto' }} checked={u.is_admin} onChange={(e) => setU({ ...u, is_admin: e.target.checked })} /> <span className="small">관리자</span>
+              <input type="checkbox" style={{ width: 'auto' }} checked={u.is_admin} onChange={(e) => setU({ ...u, is_admin: e.target.checked })} /> <span className="small">시스템 관리자 (사용자·프로그램·역할 배정 관리)</span>
             </div>
             <Status error={usr.error} ok={usr.ok} />
             <button className="primary" style={{ marginTop: 8 }} disabled={usr.busy} onClick={() => usr.run(async () => { await call('createUser', u); setU({ email: '', name: '', affiliation: '', access_code: '', is_admin: false }); await load(); }, '등록했습니다.')}>사용자 등록</button>
           </div>
         </div>
+        <EngagementRoles users={users} />
       </div>
     </>
   );

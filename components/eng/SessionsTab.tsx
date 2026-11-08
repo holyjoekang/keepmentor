@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Origin, Status, useAsync } from '@/components/ui';
 import { call } from '@/lib/client';
 import { ISSUE_CODES } from '@/lib/methodology';
-import { parseMeetingNotes, roundFromTitle, type ParsedNotes } from '@/lib/notes';
+import { parseMeetingNotes, notesToMarkdown, roundFromTitle, type ParsedNotes } from '@/lib/notes';
+import { MarkdownNotes, downloadMarkdown } from '@/components/MarkdownNotes';
 import type { Session } from '@/lib/schema';
 import { RelatedMeetings } from './RelatedMeetings';
 import type { TabProps } from './types';
@@ -15,7 +16,7 @@ const empty = (): Partial<Session> => ({
 });
 
 export function SessionsTab({ b, reload }: TabProps) {
-  const isMentor = b.role === 'mentor';
+  const isMentor = (b.role === 'mentor' || b.can_record);
   const [editing, setEditing] = useState<Partial<Session> | null>(null);
   const lastOpen = b.experiments.filter((x) => x.status !== 'done');
   const [importing, setImporting] = useState(false);
@@ -32,7 +33,7 @@ export function SessionsTab({ b, reload }: TabProps) {
       )}
       <RelatedMeetings engId={b.engagement.id} />
       {importing && <NotesImport b={b} onDone={async () => { setImporting(false); await reload(); }} onCancel={() => setImporting(false)} />}
-      {editing && <SessionForm b={b} s={editing} lastOpen={lastOpen.length} onDone={async () => { setEditing(null); await reload(); }} onCancel={() => setEditing(null)} />}
+      {editing && <SessionForm key={editing.id ?? "new"} b={b} s={editing} lastOpen={lastOpen.length} onDone={async () => { setEditing(null); await reload(); }} onCancel={() => setEditing(null)} />}
       {!b.sessions.length && <div className="card muted">아직 회차 기록이 없습니다.</div>}
       {[...b.sessions].reverse().map((s) => (
         <SessionCard key={s.id} b={b} s={s} onEdit={() => setEditing(s)} reload={reload} />
@@ -86,6 +87,7 @@ function SessionForm({ b, s, lastOpen, onDone, onCancel }: { b: TabProps['b']; s
           <textarea value={f.private_note ?? ''} onChange={set('private_note')} style={{ minHeight: 60 }} />
         </div>
       </div>
+      <MarkdownNotes value={f.meeting_notes ?? ''} onChange={(text) => setF({ ...f, meeting_notes: text })} filename={`${b.company.name}-${f.date ?? ''}-회의록`} />
       <Status error={error} ok={ok} />
       <div className="row" style={{ marginTop: 12 }}>
         <button className="primary" disabled={busy} onClick={() => run(async () => { await call('saveSession', b.engagement.id, f); onDone(); })}>저장</button>
@@ -97,8 +99,8 @@ function SessionForm({ b, s, lastOpen, onDone, onCancel }: { b: TabProps['b']; s
 }
 
 function SessionCard({ b, s, onEdit, reload }: { b: TabProps['b']; s: Session; onEdit: () => void; reload: () => Promise<void> }) {
-  const isMentor = b.role === 'mentor';
-  const isMentee = b.role === 'mentee' || b.engagement.kind === 'received';
+  const isMentor = (b.role === 'mentor' || b.can_record);
+  const isMentee = b.role === 'mentee';
   const [ack, setAck] = useState({ mentee_own_summary: s.mentee_own_summary ?? '', mentee_own_tasks: s.mentee_own_tasks ?? '', mentee_comment: s.mentee_comment ?? '', mentee_rating: Number(s.mentee_rating ?? 0) });
   const { busy, error, ok, run } = useAsync();
   const acked = String(s.mentee_ack) === 'true';
@@ -109,6 +111,7 @@ function SessionCard({ b, s, onEdit, reload }: { b: TabProps['b']; s: Session; o
         <div className="row">
           <Origin origin={s.content_origin} prefix="조언" />
           <span className={`badge ${acked ? 'accent' : 'warn'}`}>{acked ? '멘티 확인 완료' : '멘티 확인 대기'}</span>
+          {s.meeting_notes && <button onClick={() => downloadMarkdown(s.meeting_notes!, `${b.company.name}-${s.round_no}차-${s.date}`)}>.md 다운로드</button>}
           {isMentor && <button onClick={onEdit}>수정</button>}
         </div>
       </div>
@@ -139,11 +142,12 @@ function SessionCard({ b, s, onEdit, reload }: { b: TabProps['b']; s: Session; o
       )}
       {s.meeting_notes && (
         <details style={{ marginTop: 10 }}>
-          <summary className="small" style={{ cursor: 'pointer', fontWeight: 700 }}>회의록 원문 {s.notes_source ? `· ${s.notes_source}` : ''}</summary>
+          <summary className="small" style={{ cursor: 'pointer', fontWeight: 700 }}>회의록 (Markdown) {s.notes_source ? `· ${s.notes_source}` : ''}</summary>
           <pre className="packet" style={{ marginTop: 8 }}>{s.meeting_notes}</pre>
         </details>
       )}
 
+      {isMentor && s.meeting_notes_raw && <details style={{ marginTop: 10 }}><summary className="small">가져온 원문</summary><pre className="packet">{s.meeting_notes_raw}</pre></details>}
       <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 8 }}>
         <h3>멘티 확인</h3>
         {isMentee && !acked ? (
@@ -181,6 +185,7 @@ function SessionCard({ b, s, onEdit, reload }: { b: TabProps['b']; s: Session; o
 
 function NotesImport({ b, onDone, onCancel }: { b: TabProps['b']; onDone: () => void; onCancel: () => void }) {
   const [raw, setRaw] = useState('');
+  const [markdown, setMarkdown] = useState('');
   const [p, setP] = useState<ParsedNotes | null>(null);
   const [round, setRound] = useState<number>(0);
   const [date, setDate] = useState('');
@@ -192,6 +197,7 @@ function NotesImport({ b, onDone, onCancel }: { b: TabProps['b']; onDone: () => 
   function parse() {
     const r = parseMeetingNotes(raw);
     setP(r);
+    setMarkdown(notesToMarkdown(r));
     setRound(roundFromTitle(r.title) ?? Math.max(0, ...Array.from(used)) + 1);
     setDate(r.date || new Date().toISOString().slice(0, 10));
     setSource(r.title || 'Gemini 회의록');
@@ -202,7 +208,17 @@ function NotesImport({ b, onDone, onCancel }: { b: TabProps['b']; onDone: () => 
     <div className="card">
       <div className="card-title"><h2>회의록 가져오기</h2></div>
       <p className="small muted">Google Meet의 Gemini 회의록(요약 · 다음 단계 · 상세정보)을 복사해 붙여 넣으세요. 요약은 "AI 초안"으로, 다음 단계는 할 일 목록으로 들어갑니다. 핵심 3줄은 저장한 뒤 회차 카드에서 직접 쓰세요.</p>
-      <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder="회의록 전체를 붙여 넣기" style={{ minHeight: 160, fontSize: 13 }} />
+      <textarea value={raw} onChange={(e) => { setRaw(e.target.value); setP(null); }} placeholder="회의록 전체를 붙여 넣기" style={{ minHeight: 160, fontSize: 13 }} />
+      <label>원문 파일 가져오기 (.md / .txt)
+        <input type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" onChange={(e) => {
+          const file = e.target.files?.[0]; e.target.value = '';
+          if (file) run(async () => {
+            if (file.size > 2 * 1024 * 1024) throw new Error('2MB 이하 파일을 선택하세요.');
+            setRaw(await file.text()); setP(null);
+          });
+        }} />
+      </label>
+      {!p && error && <div className="alert error">{error}</div>}
       <div className="row" style={{ marginTop: 8 }}>
         <button onClick={parse} disabled={!raw.trim()}>나눠 보기</button>
         <button onClick={onCancel}>취소</button>
@@ -226,13 +242,13 @@ function NotesImport({ b, onDone, onCancel }: { b: TabProps['b']; onDone: () => 
               ))}
             </div>
           </div>
+          <MarkdownNotes value={markdown} onChange={setMarkdown} filename={`${b.company.name}-${round}차-${date}`} />
           <p className="small muted">상세정보 {p.details.length}개 항목은 회의록 원문으로 함께 저장됩니다.</p>
           {error && <div className="alert error">{error}</div>}
-          <button className="primary" disabled={busy || used.has(round) || !date} onClick={() => run(async () => {
-            const notes = [`[요약]`, p.summary, '', '[다음 단계]', ...p.nextSteps.map((n) => `- ${n}`), '', '[상세정보]', ...p.details.map((d) => `- ${d}`)].join('\n');
+          <button className="primary" disabled={busy || used.has(round) || !date || !markdown.trim() || !Number.isInteger(round) || round < 1} onClick={() => run(async () => {
             const ses = await call('saveSession', b.engagement.id, {
               round_no: round, date, advice_3lines: p.summary, decisions: '', action_items: p.nextSteps,
-              meeting_notes: notes, notes_source: source, content_origin: 'ai_raw',
+              meeting_notes: markdown, meeting_notes_raw: raw, notes_source: source, content_origin: 'ai_raw',
             });
             for (const i of pick) {
               await call('saveExperiment', b.engagement.id, { session_id: ses.id, hypothesis: p.nextSteps[i], method: '', success_metric: '', origin: 'ai_raw' });

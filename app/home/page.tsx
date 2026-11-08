@@ -70,7 +70,7 @@ export default function HomePage() {
         <div className="tabs">
           <button className={tab === 'asMentor' ? 'on' : ''} onClick={() => setTab('asMentor')}>멘토로 · {data?.asMentor.length ?? 0}</button>
           <button className={tab === 'asMentee' ? 'on' : ''} onClick={() => setTab('asMentee')}>멘티로 · {data?.asMentee.length ?? 0}</button>
-          {me.is_admin && <button className={tab === 'asAdmin' ? 'on' : ''} onClick={() => setTab('asAdmin')}>기관 · {data?.asAdmin.length ?? 0}</button>}
+          {!!data?.asAdmin.length && <button className={tab === 'asAdmin' ? 'on' : ''} onClick={() => setTab('asAdmin')}>기관 · {data?.asAdmin.length ?? 0}</button>}
         </div>
         <ErrorBox error={error} />
         {data && !items.length && (

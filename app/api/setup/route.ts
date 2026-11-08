@@ -43,6 +43,7 @@ export async function GET() {
 
 // 최초 관리자 등록: Sheets는 GAS_SECRET, Supabase는 별도 SETUP_SECRET으로 보호한다.
 export async function POST(req: Request) {
+  if (process.env.READ_ONLY_MODE === '1') return NextResponse.json({ ok: false, error: 'DB 전환 중에는 초기 설정을 실행할 수 없습니다.' }, { status: 503 });
   try {
     const { secret, admin_email, admin_name, admin_code } = await req.json();
     const provider = storageProvider();

@@ -7,7 +7,7 @@ import type { Experiment } from '@/lib/schema';
 import type { TabProps } from './types';
 
 export function ExperimentsTab({ b, reload }: TabProps) {
-  const isMentor = b.role === 'mentor';
+  const isMentor = (b.role === 'mentor' || b.can_record);
   const [adding, setAdding] = useState(false);
   const open = b.experiments.filter((x) => x.status !== 'done');
   const done = b.experiments.filter((x) => x.status === 'done');
@@ -26,7 +26,7 @@ export function ExperimentsTab({ b, reload }: TabProps) {
 }
 
 function ExperimentCard({ b, x, isNew, onDone }: { b: TabProps['b']; x: Experiment; isNew?: boolean; onDone: () => Promise<void> | void }) {
-  const isMentor = b.role === 'mentor';
+  const isMentor = (b.role === 'mentor' || b.can_record);
   const [f, setF] = useState<Experiment>(x);
   const { busy, error, ok, run } = useAsync();
   const set = (k: keyof Experiment) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });

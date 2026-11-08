@@ -38,10 +38,10 @@ export function createActions(store: Store, me: User) {
   const isRecorder = (e: Engagement) => e.kind === 'received' && (e.recorder_email ?? '').toLowerCase() === email;
 
   function roleIn(e: Engagement): 'mentor' | 'mentee' | 'admin' | null {
-    if (isRecorder(e)) return 'mentor';
+    if (isRecorder(e)) return 'mentee';
     if (e.mentor_email?.toLowerCase() === email) return 'mentor';
     if ((e.mentee_emails ?? []).map((x) => x.toLowerCase()).includes(email)) return 'mentee';
-    if (isAdmin) return 'admin';
+    if ((e.institution_emails ?? []).some((x) => x.trim().toLowerCase() === email)) return 'admin';
     return null;
   }
 
@@ -49,13 +49,13 @@ export function createActions(store: Store, me: User) {
     const e = (await store.list<Engagement>('Engagements')).find((x) => x.id === engId);
     if (!e) fail('멘토링 건을 찾을 수 없습니다.');
     const role = roleIn(e!);
-    if (!role || !allowed.includes(role)) fail('이 작업을 할 권한이 없습니다.');
+    if (!role || (!allowed.includes(role) && !(isRecorder(e!) && allowed.includes('mentor')))) fail('이 작업을 할 권한이 없습니다.');
     return { e: e!, role: role! };
   }
 
   async function visibleMeetings() {
     const all = await store.list<MentorMeeting>('MentorMeetings');
-    return all.filter((m) => m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email) || isAdmin);
+    return all.filter((m) => m.owner_email?.toLowerCase() === email || (m.share_emails ?? []).map((x) => x.toLowerCase()).includes(email));
   }
 
   async function bundle(engId: string): Promise<Bundle> {
@@ -67,16 +67,16 @@ export function createActions(store: Store, me: User) {
     ]);
     const company = companies.find((c) => c.id === e.company_id);
     if (!company) fail('기업 정보를 찾을 수 없습니다.');
-    const isMentor = role === 'mentor';
+    const isMentor = role === 'mentor' || isRecorder(e);
     return {
       engagement: e,
       company: company!,
       program: programs.find((p) => p.id === e.program_id),
-      role,
+      role, can_record: isRecorder(e),
       assessments: assessments.filter((a) => a.eng_id === engId),
       sessions: sessions
         .filter((s) => s.eng_id === engId)
-        .map((s) => (isMentor ? s : { ...s, private_note: undefined }))
+        .map((s) => (isMentor ? s : { ...s, private_note: undefined, meeting_notes_raw: undefined }))
         .sort((a, b) => Number(a.round_no) - Number(b.round_no)),
       experiments: experiments.filter((x) => x.eng_id === engId),
       // AI 작업과 패널 원문은 멘토만 본다. 멘티는 확정본만 본다.
@@ -193,12 +193,12 @@ export function createActions(store: Store, me: User) {
 
     async updateEngagement(engId: string, patch: Partial<Engagement>) {
       const { e, role } = await loadEng(engId, ['mentor', 'mentee']);
-      if (role === 'mentee') {
+      if (role === 'mentee' && !isRecorder(e)) {
         // 멘티는 자신의 "가장 크게 바뀐 점"만 쓴다
         return store.update<Engagement>('Engagements', engId, { mentee_biggest_change: patch.mentee_biggest_change, updated_at: nowIso() });
       }
       const p: Partial<Engagement> = { ...patch };
-      delete p.id; delete p.mentor_email; delete p.mentee_emails; delete p.company_id; delete p.mentee_biggest_change;
+      delete p.id; delete p.mentor_email; delete p.mentee_emails; delete p.institution_emails; delete p.company_id; delete p.program_id; delete p.kind; delete p.recorder_email; if (!isRecorder(e)) delete p.mentee_biggest_change;
       if (p.stage && p.stage !== e.stage) {
         // 사람 점검 지점: 단계 전환 근거는 멘토가 직접 쓴다
         req(p.stage_transition_reason, '단계 전환 근거');
@@ -214,12 +214,12 @@ export function createActions(store: Store, me: User) {
       await loadEng(engId, ['mentor']);
       if (s.id) {
         const prev = (await store.list<Session>('Sessions')).find((x) => x.id === s.id);
-        if (!prev) fail('회차를 찾을 수 없습니다.');
+        if (!prev || prev.eng_id !== engId) fail('이 멘토링의 회차를 찾을 수 없습니다.');
         let origin = prev!.content_origin ?? 'human';
-        if (origin === 'ai_raw' && (s.advice_3lines !== prev!.advice_3lines || s.decisions !== prev!.decisions)) origin = 'ai_edited';
-        const { id, eng_id: _e, ...rest } = s;
-        void _e;
-        return store.update<Session>('Sessions', id!, { ...rest, content_origin: origin, updated_at: nowIso() });
+        if (origin === 'ai_raw' && ((s.advice_3lines !== undefined && s.advice_3lines !== prev!.advice_3lines) || (s.decisions !== undefined && s.decisions !== prev!.decisions) || (s.meeting_notes !== undefined && s.meeting_notes !== prev!.meeting_notes))) origin = 'ai_edited';
+        const writable = ['date', 'mentor_own_summary', 'mentor_next_check', 'advice_3lines', 'decisions', 'mentor_confidence', 'next_date', 'private_note', 'issue_codes', 'meeting_notes', 'meeting_notes_raw', 'notes_source', 'action_items'];
+        const patch = Object.fromEntries(Object.entries(s).filter(([key]) => writable.includes(key)));
+        return store.update<Session>('Sessions', s.id, { ...patch, content_origin: origin, updated_at: nowIso() });
       }
       req(s.date, '일시');
       const all = (await store.list<Session>('Sessions')).filter((x) => x.eng_id === engId);
@@ -231,7 +231,7 @@ export function createActions(store: Store, me: User) {
         issue_codes: s.issue_codes ?? [], mentor_own_summary: s.mentor_own_summary ?? '', mentor_next_check: s.mentor_next_check ?? '',
         advice_3lines: s.advice_3lines ?? '', decisions: s.decisions ?? '', mentor_confidence: s.mentor_confidence ?? 3,
         next_date: s.next_date ?? '', private_note: s.private_note ?? '', content_origin: origin, mentee_ack: false,
-        meeting_notes: s.meeting_notes ?? '', notes_source: s.notes_source ?? '', action_items: s.action_items ?? [],
+        meeting_notes: s.meeting_notes ?? '', meeting_notes_raw: s.meeting_notes_raw ?? '', notes_source: s.notes_source ?? '', action_items: s.action_items ?? [],
         created_at: nowIso(), updated_at: nowIso(),
       };
       await store.insert('Sessions', row);
@@ -247,25 +247,26 @@ export function createActions(store: Store, me: User) {
       // 사람 점검 지점: 멘티가 이해한 내용을 직접 쓴다
       req(p.mentee_own_summary, '내가 이해한 핵심 3줄');
       req(p.mentee_own_tasks, '이번 2주에 내가 할 일');
-      return store.update<Session>('Sessions', sessionId, { ...p, mentee_ack: true, updated_at: nowIso() });
+      return store.update<Session>('Sessions', sessionId, { mentee_own_summary: p.mentee_own_summary, mentee_own_tasks: p.mentee_own_tasks, mentee_comment: p.mentee_comment ?? '', mentee_rating: Number(p.mentee_rating) || 0, mentee_ack: true, updated_at: nowIso() });
     },
 
     async saveExperiment(engId: string, x: Partial<Experiment>) {
-      const { role } = await loadEng(engId, ['mentor', 'mentee']);
+      const { e, role } = await loadEng(engId, ['mentor', 'mentee']);
+      if (x.session_id && !(await store.list<Session>('Sessions')).some((s) => s.id === x.session_id && s.eng_id === engId)) fail('이 멘토링의 회차를 찾을 수 없습니다.');
       if (x.status === 'done') {
         req(x.result_value, '결과 수치');
         req(x.learning, '배운 것');
       }
       if (x.id) {
         const prev = (await store.list<Experiment>('Experiments')).find((r) => r.id === x.id);
-        if (!prev) fail('실험 카드를 찾을 수 없습니다.');
+        if (!prev || prev.eng_id !== engId) fail('이 멘토링의 실험 카드를 찾을 수 없습니다.');
         const { id, eng_id: _e, ...rest } = x;
         void _e;
-        if (role === 'mentee') delete rest.decision; // 결정은 멘토가 기록
+        if (role === 'mentee' && !isRecorder(e)) delete rest.decision; // 결정은 멘토가 기록
         const origin = prev!.origin === 'ai_raw' && (rest.hypothesis !== undefined && rest.hypothesis !== prev!.hypothesis) ? 'ai_edited' : prev!.origin;
         return store.update<Experiment>('Experiments', id!, { ...rest, origin, updated_at: nowIso() });
       }
-      if (role !== 'mentor') fail('실험 카드는 멘토가 만듭니다.');
+      if (role !== 'mentor' && !isRecorder(e)) fail('실험 카드는 멘토가 만듭니다.');
       req(x.hypothesis, '가설');
       const row: Experiment = {
         id: newId('EXP'), eng_id: engId, session_id: x.session_id ?? '', hypothesis: String(x.hypothesis),
@@ -279,6 +280,10 @@ export function createActions(store: Store, me: User) {
     // ---- AI 연계 ----
     async createJob(engId: string, type: TaskType, refId?: string) {
       await loadEng(engId, ['mentor']);
+      if (refId) {
+        const session = (await store.list<Session>('Sessions')).find((s) => s.id === refId && s.eng_id === engId);
+        if (!session) fail('이 멘토링의 회차를 찾을 수 없습니다.');
+      }
       if (!TASKS[type]) fail('알 수 없는 작업 유형입니다.');
       const b = await bundle(engId);
       const missing = missingHumanInputs(type, b, refId);
@@ -322,6 +327,7 @@ export function createActions(store: Store, me: User) {
         });
       }
       if (type === 'J2') {
+        if (!(await store.list<Session>('Sessions')).some((s) => s.id === j!.ref_id && s.eng_id === e.id)) fail('이 멘토링의 회차를 찾을 수 없습니다.');
         const advice = Array.isArray(data.advice_3lines) ? (data.advice_3lines as string[]).join('\n') : String(data.advice_3lines ?? '');
         await store.update<Session>('Sessions', j!.ref_id!, {
           advice_3lines: advice, decisions: String(data.decisions ?? ''),
@@ -372,8 +378,8 @@ export function createActions(store: Store, me: User) {
       const [engs, companies] = await Promise.all([store.list<Engagement>('Engagements'), store.list<Company>('Companies')]);
       return engs.filter((e) => roleIn(e)).map((e) => ({
         id: e.id, company_id: e.company_id, company: companies.find((c) => c.id === e.company_id)?.name ?? '(기업 미상)',
-        kind: e.kind ?? 'given', mentor_name: e.mentor_name ?? '', role: isRecorder(e) ? 'mentee' : roleIn(e),
-        can_record: roleIn(e) === 'mentor',
+        kind: e.kind ?? 'given', mentor_name: e.mentor_name ?? '', role: roleIn(e),
+        can_record: roleIn(e) === 'mentor' || isRecorder(e),
       }));
     },
     // 멘토링 건에 연결된 멘토 회의: 이 건 또는 같은 기업의 다른 건에 연결된 것 중 내가 볼 수 있는 것
@@ -396,7 +402,7 @@ export function createActions(store: Store, me: User) {
       if (m.id) {
         const prev = (await store.list<MentorMeeting>('MentorMeetings')).find((x) => x.id === m.id);
         if (!prev) fail('회의 기록을 찾을 수 없습니다.');
-        if (prev!.owner_email?.toLowerCase() !== email && !isAdmin) fail('작성자만 고칠 수 있습니다.');
+        if (prev!.owner_email?.toLowerCase() !== email) fail('작성자만 고칠 수 있습니다.');
         const { id, owner_email: _o, created_at: _c, ...rest } = m;
         void _o; void _c;
         return store.update<MentorMeeting>('MentorMeetings', id!, { ...rest, share_emails: share, updated_at: nowIso() });
@@ -414,13 +420,48 @@ export function createActions(store: Store, me: User) {
 
     // ---- 관리 ----
     async programs() {
-      return store.list<Program>('Programs');
+      const programs = await store.list<Program>('Programs');
+      if (isAdmin) return programs;
+      const engagements = await store.list<Engagement>('Engagements');
+      const ids = new Set(engagements.filter((e) => roleIn(e)).map((e) => e.program_id));
+      return programs.filter((p) => ids.has(p.id));
     },
     async createProgram(p: Partial<Program>) {
       if (!isAdmin) fail('관리자만 프로그램을 만들 수 있습니다.');
       req(p.org_name, '기관명'); req(p.name, '프로그램명');
       const row: Program = { id: newId('PRG'), org_name: String(p.org_name), name: String(p.name), year: Number(p.year) || new Date().getFullYear(), session_count: Number(p.session_count) || 3, interval_weeks: Number(p.interval_weeks) || 2, created_at: nowIso() };
       return store.insert('Programs', row);
+    },
+    async engagementAssignments() {
+      if (!isAdmin) fail('관리자만 역할을 배정할 수 있습니다.');
+      const [engagements, companies] = await Promise.all([store.list<Engagement>('Engagements'), store.list<Company>('Companies')]);
+      return engagements.map((e) => ({
+        id: e.id, company: companies.find((c) => c.id === e.company_id)?.name ?? '(기업 미상)',
+        mentor_email: e.mentor_email, mentee_emails: e.mentee_emails ?? [], institution_emails: e.institution_emails ?? [],
+        kind: e.kind ?? 'given', recorder_email: e.recorder_email ?? '',
+      }));
+    },
+    async assignEngagementRoles(engId: string, members: { mentor_email: string; mentee_emails: string[]; institution_emails: string[] }) {
+      if (!isAdmin) fail('관리자만 역할을 배정할 수 있습니다.');
+      const engagement = (await store.list<Engagement>('Engagements')).find((e) => e.id === engId);
+      if (!engagement) fail('멘토링 건을 찾을 수 없습니다.');
+      const normalize = (value: unknown) => String(value ?? '').trim().toLowerCase();
+      const list = (value: unknown): string[] => {
+        if (!Array.isArray(value)) fail('역할별 이메일 목록을 확인하세요.');
+        return [...new Set((value as unknown[]).map(normalize).filter(Boolean))];
+      };
+      const mentor = normalize(members.mentor_email);
+      const mentees = list(members.mentee_emails);
+      const institutions = list(members.institution_emails);
+      if ((!mentor && engagement!.kind !== 'received') || !mentees.length) fail('멘토와 멘티를 지정하세요.');
+      const assigned = [mentor, ...mentees, ...institutions].filter(Boolean);
+      if (new Set(assigned).size !== assigned.length) fail('같은 건에서 한 사용자에게 하나의 역할만 배정하세요.');
+      const registered = new Set((await store.list<User>('Users')).map((u) => normalize(u.email)));
+      if (assigned.some((address) => !registered.has(address))) fail('먼저 사용자를 등록하세요.');
+      if (engagement!.kind === 'received' && !mentees.includes(normalize(engagement!.recorder_email))) fail('직접 기록하는 멘티는 유지해야 합니다.');
+      await store.update<Engagement>('Engagements', engId, { mentor_email: mentor, mentee_emails: mentees, institution_emails: institutions, updated_at: nowIso() });
+      await audit('assign_roles', 'Engagements', engId);
+      return true;
     },
     async users() {
       if (!isAdmin) fail('관리자만 사용자 목록을 볼 수 있습니다.');

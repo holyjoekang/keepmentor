@@ -16,7 +16,7 @@ export const SHEETS = {
     'goals', 'bottlenecks', 'mentor_own_bottleneck', 'ai_briefing', 'briefing_choice_reason',
     'mentor_biggest_change', 'mentee_biggest_change', 'final_report',
     'start_date', 'created_at', 'updated_at',
-    'kind', 'mentor_name', 'recorder_email',
+    'kind', 'mentor_name', 'recorder_email', 'institution_emails',
   ],
   Assessments: [
     'id', 'eng_id', 'round', 'rater', 'q_code', 'score_input', 'evidence_type', 'evidence_note',
@@ -28,7 +28,7 @@ export const SHEETS = {
     'advice_3lines', 'decisions', 'mentor_confidence', 'next_date', 'private_note',
     'content_origin', 'mentee_own_summary', 'mentee_own_tasks', 'mentee_ack', 'mentee_comment', 'mentee_rating',
     'created_at', 'updated_at',
-    'meeting_notes', 'notes_source', 'action_items',
+    'meeting_notes', 'meeting_notes_raw', 'notes_source', 'action_items',
   ],
   Experiments: [
     'id', 'eng_id', 'session_id', 'hypothesis', 'method', 'success_metric', 'target_value', 'due_date',
@@ -71,6 +71,7 @@ export interface Engagement extends Row {
   start_date?: string; created_at?: string; updated_at?: string;
   // kind 'received': 외부 멘토에게 받는 멘토링. recorder(멘티 본인)가 직접 기록한다.
   kind?: 'given' | 'received'; mentor_name?: string; recorder_email?: string;
+  institution_emails?: string[];
 }
 export interface Assessment extends Row {
   eng_id: string; round: number; rater: 'self' | 'mentor'; q_code: string; score_input: number;
@@ -83,7 +84,7 @@ export interface Session extends Row {
   advice_3lines?: string; decisions?: string; mentor_confidence?: number; next_date?: string; private_note?: string;
   content_origin?: string; mentee_own_summary?: string; mentee_own_tasks?: string; mentee_ack?: boolean;
   mentee_comment?: string; mentee_rating?: number; created_at?: string; updated_at?: string;
-  meeting_notes?: string; notes_source?: string; action_items?: string[];
+  meeting_notes?: string; meeting_notes_raw?: string; notes_source?: string; action_items?: string[];
 }
 export interface Experiment extends Row {
   eng_id: string; session_id?: string; hypothesis: string; method?: string; success_metric?: string;
@@ -112,6 +113,7 @@ export interface Bundle {
   company: Company;
   program?: Program;
   role: 'mentor' | 'mentee' | 'admin';
+  can_record?: boolean;
   assessments: Assessment[];
   sessions: Session[];
   experiments: Experiment[];

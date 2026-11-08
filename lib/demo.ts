@@ -23,7 +23,7 @@ export async function seedDemo(store: Store) {
   };
   await store.insert('Companies', company);
   const eng: Engagement = {
-    id: 'ENG-demo', program_id: program.id, company_id: company.id, mentor_email: DEMO_USERS[0].email, mentee_emails: [DEMO_USERS[1].email],
+    id: 'ENG-demo', program_id: program.id, company_id: company.id, mentor_email: DEMO_USERS[0].email, mentee_emails: [DEMO_USERS[1].email], institution_emails: [DEMO_USERS[2].email],
     status: '진행', stage: 'S1', stage_transition_reason: '비지인 인터뷰 14건과 문제 정의서 확인 (사전진단 근거)',
     gates: { S1: { met: true, note: '인터뷰 14건 기록 확인' } }, red_flags: [], issue_codes: ['I03', 'I05'],
     goals: [{ text: '유료 전환 구조 만들기', success: 'LOI 또는 유료 계약 3건', q_codes: ['C2', 'B2'] }],

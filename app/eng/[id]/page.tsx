@@ -78,7 +78,7 @@ export default function EngagementPage() {
         {b && (
           <>
             <div className="tabs">
-              {TABS.filter((t) => !('mentorOnly' in t) || b.role === 'mentor').map((t) => (
+              {TABS.filter((t) => !('mentorOnly' in t) || (b.role === 'mentor' || b.can_record)).map((t) => (
                 <button key={t.k} className={tab === t.k ? 'on' : ''} onClick={() => go(t.k)}>
                   <Icon name={t.icon} size={15} /> {t.label}
                 </button>
@@ -91,7 +91,7 @@ export default function EngagementPage() {
             {tab === 'experiments' && <ExperimentsTab b={b} reload={reload} />}
             {tab === 'timeline' && <TimelineTab b={b} reload={reload} />}
             {tab === 'report' && <ReportTab b={b} reload={reload} />}
-            {tab === 'ai' && b.role === 'mentor' && <AITab b={b} reload={reload} />}
+            {tab === 'ai' && (b.role === 'mentor' || b.can_record) && <AITab b={b} reload={reload} />}
           </>
         )}
       </div>
@@ -115,7 +115,7 @@ function Header({ b }: { b: Bundle }) {
     { icon: 'flag', label: '레드플래그', value: String(flags.length), cls: flags.length ? 'danger' : '' },
   ];
   const received = e.kind === 'received';
-  const roleLabel = received ? '멘티 · 직접 기록' : b.role === 'mentor' ? '멘토' : b.role === 'mentee' ? '멘티' : '기관';
+  const roleLabel = b.role === 'mentee' && b.can_record ? '멘티 · 직접 기록' : (b.role === 'mentor' || b.can_record) ? '멘토' : b.role === 'mentee' ? '멘티' : '기관';
 
   return (
     <>

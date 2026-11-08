@@ -13,7 +13,7 @@ import type { TabProps } from './types';
 
 export function Overview({ b, reload }: TabProps) {
   const e = b.engagement;
-  const isMentor = b.role === 'mentor';
+  const isMentor = (b.role === 'mentor' || b.can_record);
   const self = axisScores(b.assessments, 'self');
   const mentor = axisScores(b.assessments, 'mentor');
   const bottlenecks = bottleneckCandidates(b.assessments);

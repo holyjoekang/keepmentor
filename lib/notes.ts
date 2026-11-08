@@ -51,3 +51,14 @@ export function roundFromTitle(title: string): number | undefined {
   const m = title.match(/(\d+)\s*차/);
   return m ? Number(m[1]) : undefined;
 }
+
+/** Markdown document for a structured meeting note; preserves multiline content. */
+export function notesToMarkdown(notes: ParsedNotes): string {
+  const title = notes.title.replace(/[\r\n]+/g, ' ').trim() || '회의록';
+  const sections = [`# ${title}`];
+  if (notes.date) sections.push(`일시: ${notes.date}`);
+  sections.push(`## 요약\n\n${notes.summary}`);
+  sections.push(`## 다음 단계\n\n${notes.nextSteps.map((s) => `- ${s}`).join('\n')}`);
+  sections.push(`## 상세정보\n\n${notes.details.map((s) => `- ${s}`).join('\n')}`);
+  return `${sections.join('\n\n')}\n`;
+}
