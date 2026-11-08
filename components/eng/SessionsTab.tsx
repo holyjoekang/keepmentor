@@ -5,6 +5,7 @@ import { Origin, Status, useAsync } from '@/components/ui';
 import { call } from '@/lib/client';
 import { ISSUE_CODES } from '@/lib/methodology';
 import { parseMeetingNotes, notesToMarkdown, roundFromTitle, type ParsedNotes } from '@/lib/notes';
+import { MarkdownView } from '@/components/MarkdownView';
 import { MarkdownNotes, downloadMarkdown } from '@/components/MarkdownNotes';
 import type { Session } from '@/lib/schema';
 import { RelatedMeetings } from './RelatedMeetings';
@@ -143,7 +144,7 @@ function SessionCard({ b, s, onEdit, reload }: { b: TabProps['b']; s: Session; o
       {s.meeting_notes && (
         <details style={{ marginTop: 10 }}>
           <summary className="small" style={{ cursor: 'pointer', fontWeight: 700 }}>회의록 (Markdown) {s.notes_source ? `· ${s.notes_source}` : ''}</summary>
-          <pre className="packet" style={{ marginTop: 8 }}>{s.meeting_notes}</pre>
+          <MarkdownView text={s.meeting_notes} />
         </details>
       )}
 
