@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Status, TopBar, useAsync, useMe } from '@/components/ui';
 import { call } from '@/lib/client';
@@ -28,7 +29,7 @@ export default function AdminPage() {
     <>
       <TopBar me={me} />
       <div className="wrap">
-        <h1>관리</h1>
+        <div className="row between" style={{marginBottom:24}}><h1>관리</h1><Link href="/admin/analytics" className="btn primary">방문·활동 분석 →</Link></div>
         <div className="grid grid-2">
           <div className="card">
             <h2>프로그램</h2>

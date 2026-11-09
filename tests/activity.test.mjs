@@ -1,0 +1,17 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {mkdtempSync,rmSync,symlinkSync} from 'node:fs';
+import {tmpdir} from 'node:os';import {join} from 'node:path';import {createRequire} from 'node:module';
+const out=mkdtempSync(join(tmpdir(),'activity-test-'));
+execFileSync('node_modules/.bin/tsc',['lib/activity.ts','lib/activity-server.ts','--module','commonjs','--moduleResolution','node','--target','ES2022','--lib','ES2022,DOM','--outDir',out,'--skipLibCheck','--esModuleInterop']);
+symlinkSync(join(process.cwd(),'node_modules'),join(out,'node_modules'),'dir');after(()=>rmSync(out,{recursive:true,force:true}));
+const require=createRequire(import.meta.url),{safePath,normalizeActivity,summarize,csvCell}=require(join(out,'activity.js'));
+const {context,record}=require(join(out,'activity-server.js'));const {sign}=require(join(out,'session.js'));const {NextRequest}=require('next/server');
+process.env.SESSION_SECRET='test-only-secret-not-a-production-secret';
+test('URLs discard query/hash and unknown sensitive paths',()=>{assert.equal(safePath('/meetings?code=secret#x'),'/meetings');assert.equal(safePath('/secret-token/example'),'/other');assert.equal(safePath('/eng/ENG-1/brief'),'/eng/ENG-1/brief');});
+test('normalization never exposes raw audit detail or unknown fields',()=>{const r=normalizeActivity({id:'a',ts:'2026-11-09',action:'page_view',sheet:'Activity',detail:JSON.stringify({path:'/home',code:'secret',body:'private'})});assert.equal(r.path,'/home');assert.ok(!JSON.stringify(r).includes('secret'));assert.equal(normalizeActivity({id:'b',sheet:'Users',detail:'secret',action:'update'}).event,'audit');});
+test('summary counts views, visitors, sessions and failures independently',()=>{const base=normalizeActivity({id:'a',sheet:'Activity',action:'page_view',ts:'2026-11-09',detail:'{"visitor":"v","session":"s"}'});const s=summarize([base,{...base,event:'login_failure'}]);assert.equal(s.views,1);assert.equal(s.visitors,1);assert.equal(s.sessions,1);assert.equal(s.failures,1);});
+test('CSV quotes text and neutralizes spreadsheet formulas',()=>{assert.equal(csvCell('=HYPERLINK("x")'),'"\'=HYPERLINK(""x"")"');assert.equal(csvCell('a,b'),'"a,b"');});
+test('identity comes from signed cookies, forged visitor IDs are replaced',()=>{const c=context(new NextRequest('https://example.test/api/activity',{headers:{cookie:`km_session=${sign('admin@example.test')}; km_visitor=forged`}}));assert.equal(c.user,'admin@example.test');assert.match(c.visitor,/^activity:visitor:/);assert.notEqual(c.visitor,'forged');});
+test('recording excludes raw IP/UA and auth material, tolerates storage failure',async()=>{const old=global.fetch;process.env.SUPABASE_URL='https://db.example.test';process.env.SUPABASE_SERVICE_ROLE_KEY='test';let body;global.fetch=async(u,init)=>{body=JSON.parse(init.body);return {ok:true};};try{const c=context(new NextRequest('https://example.test',{headers:{'x-forwarded-for':'192.0.2.10','user-agent':'Chrome/123 private UA'}}));await record(c,'page_view',{path:'/home?secret=123'});assert.ok(!JSON.stringify(body).includes('192.0.2.10'));assert.ok(!JSON.stringify(body).includes('private UA'));assert.ok(!JSON.stringify(body).includes('secret=123'));global.fetch=async()=>{throw new Error('outage')};await assert.doesNotReject(()=>record(c,'page_view'));}finally{global.fetch=old;}});

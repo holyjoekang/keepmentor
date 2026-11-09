@@ -37,7 +37,7 @@ export function TopBar({ me, variant = 'app' }: { me?: Me | null; variant?: 'app
       {me ? (
         <div className="row small">
           <Link href="/guide" className="navlink hide-sm">Claude 프로젝트 지침</Link>
-          {me.is_admin && <Link href="/admin" className="navlink">관리</Link>}
+          {me.is_admin && <><Link href="/admin" className="navlink">관리</Link><Link href="/admin/analytics" className="navlink">활동 분석</Link></>}
           <span className="badge"><Icon name="user" size={12} /> {me.name}</span>
           <button onClick={async () => { await logout(); router.replace('/login'); }}>로그아웃</button>
         </div>

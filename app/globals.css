@@ -538,3 +538,6 @@ input:focus, select:focus, textarea:focus { outline: 3px solid #0071e34d; outlin
 .ed-sec.ink .badge[style*="var(--dawn)"] { color: #fff !important; }
 @media (max-width: 900px) { .topbar .mobile-menu nav { left: 0; right: auto; } }
 .sticky-nav a, .tabs button { flex-shrink: 0; }
+
+.activity-detail > div { display:grid;grid-template-columns:140px minmax(0,1fr);padding:8px 0;border-bottom:1px solid var(--border); }
+.activity-detail dt { color:var(--text-2); }.activity-detail dd { margin:0;overflow-wrap:anywhere; }
