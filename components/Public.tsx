@@ -22,6 +22,7 @@ export function PubNav({ me }: { me?: Me | null }) {
           <nav className="row hide-sm" style={{ gap: 22 }}>
             <Link href="/" className="nl">방법론</Link>
             <Link href="/#flow" className="nl">진행 절차</Link>
+            <Link href="/stages" className="nl">성장 단계</Link>
             <Link href="/cases" className="nl">사례</Link>
             <Link href="/solutions" className="nl">도입 안내</Link>
             <Link href="/about" className="nl">소개</Link>
@@ -32,7 +33,7 @@ export function PubNav({ me }: { me?: Me | null }) {
           <Link href={me ? '/home' : '/login'} className="nl" style={{ fontWeight: 600 }}>{me ? '내 멘토링' : '로그인'}</Link>
           <Link href="/solutions#contact" className="btn indigo">도입 문의</Link>
           <details className="mobile-menu"><summary aria-label="사이트 메뉴">메뉴 ☰</summary><nav aria-label="모바일 메뉴">
-            <Link href="/">방법론</Link><Link href="/cases">사례</Link><Link href="/solutions">도입 안내</Link><Link href="/about">소개</Link><Link href="/home">내 멘토링</Link><Link href="/meetings">멘토 회의</Link><Link href="/solutions#contact">도입 문의</Link>
+            <Link href="/">방법론</Link><Link href="/stages">성장 단계</Link><Link href="/cases">사례</Link><Link href="/solutions">도입 안내</Link><Link href="/about">소개</Link><Link href="/home">내 멘토링</Link><Link href="/meetings">멘토 회의</Link><Link href="/solutions#contact">도입 문의</Link>
           </nav></details>
         </div>
       </div>
@@ -55,6 +56,7 @@ export function PubFooter() {
             <Link href="/#diagnosis">진단 기준</Link>
             <Link href="/#stages">단계와 관문</Link>
             <Link href="/#kpi">성과 측정</Link>
+            <Link href="/stages">성장 단계 가이드</Link>
             <Link href="/cases">사례집</Link>
           </div>
           <div>
